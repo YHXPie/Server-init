@@ -217,8 +217,9 @@ done
 # ===> 1-8. 收尾
 sshd -t # 检查语法
 systemctl restart ssh
+sleep 1s
 
-echo -e "\n${RED} ===> 用户配置完成 <=== ${NC}"
+echo -e "\n${GREEN} ===> 用户配置完成 <=== ${NC}"
 echo -e " 用户: ${GREEN} $USERNAME ${NC}"
 echo -e " 公钥: ${GREEN} $PUB_KEY ${NC}"
 echo -e "\n${RED} 请新建一个终端用于测试登录： ${NC}"
@@ -227,7 +228,7 @@ echo -e "${GREEN}    - 正常情况：可正常登录而不是被拒绝 ${NC}"
 echo -e "${RED} 2. 登陆后使用 'sudo -i' 时是否还需要输入密码? ${NC}"
 echo -e "${GREEN}    - 正常情况：使用 'sudo -i' 可以直接以 root 运行 ${NC}"
 
-sleep 3s
+sleep 1s
 
 echo -ne "\n${RED} 如果测试结果没有问题，请输入 'ok': ${NC}"
 # 逻辑判断：只有在输入 ok 后才继续执行
@@ -254,7 +255,7 @@ apt --fix-broken install -y || true
 
 echo -e "\n${GREEN} 正在确认当前内核... ${NC}"
 CURRENT_KERNEL=$(uname -r)
-echo -e "${GREEN} ===> 当前运行内核${NC}: ${YELLOW} $CURRENT_KERNEL ${NC}"
+echo -e "${GREEN} ===> 当前运行内核${NC}: $CURRENT_KERNEL "
 sleep 1s
 
 # 构造当前运行内核的完整包名
