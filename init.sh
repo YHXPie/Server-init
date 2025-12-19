@@ -222,7 +222,9 @@ function get_apt_source_file() {
 # ===> 预定义修改 apt 资源文件的逻辑
 function change_apt_source() {
     local REGION=$1
-    local SOURCE_FILE=$(get_source_file)
+
+    # 直接调用函数来设定全局变量 SOURCE_FILE
+    get_apt_source_file
 
     # 备份原文件
     if [ ! -f "${SOURCE_FILE}.bak" ]; then
@@ -255,11 +257,11 @@ function change_apt_source() {
 }
 
 # ===> 逻辑开始
+apt update -y
+sleep 1s
 
 # ===> 第一次确定地区
 echo -e "\n${GREEN} ===> 正在确定服务器地区信息... (1/5) ${NC}"
-sleep 1s
-apt update -y
 sleep 1s
 
 if [ "$LOCATION" = "UNKNOWN" ]; then
@@ -294,7 +296,7 @@ sleep 1s
 clear
 
 # ===> 换源逻辑完成，开始切换至 HTTPS
-echo -e "\n ===> apt 源将切换至 https 模式 (2/5) ${NC}"
+echo -e "\n${GREEN} ===> apt 源将切换至 https 模式 (2/5) ${NC}"
 sleep 1s
 
 # 这一步对于 Ubuntu 24.04 有点特殊，它的源格式变了：/etc/apt/sources.list.d/ubuntu.sources
@@ -303,9 +305,23 @@ sleep 1s
 apt install -y apt-transport-https ca-certificates
 sleep 1s
 
-# 如果是旧版 sources.list，尝试替换 http -> https
-if [ -f /etc/apt/sources.list ]; then
-    sed -i 's/http:/https:/g' /etc/apt/sources.list
+# ===> 定义源文件路径，同时兼容了 Ubuntu 24.04+ 的 DEB822 格式
+if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
+    APT_FILE="/etc/apt/sources.list.d/ubuntu.sources"
+elif [ -f /etc/apt/sources.list ]; then
+    APT_FILE="/etc/apt/sources.list"
+else
+    APT_FILE=""
+fi
+
+# ===> 执行替换
+if [ -n "$APT_FILE" ]; then
+    # 替换 http:// 为 https://
+    sed -i 's@http://@https://@g' "$APT_FILE"
+    # 如果源链接原本是 http: 即不带 // 的罕见情况，进行一次保险
+    sed -i 's@http:@https:@g' "$APT_FILE"
+else
+    echo -e "${GREEN} 未找到标准的 apt 源文件，跳过 https 切换 ${NC}"
 fi
 echo -e "\n${GREEN} ===> Partly Done. (2/5) ${NC}"
 sleep 1s
