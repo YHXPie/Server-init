@@ -238,7 +238,7 @@ while true; do
         echo -e "\n${GREEN} ===> 确认成功... ${NC}"
         break
     else
-        echo -ne "${RED} ===> 输入无效，请输入 'ok' ${NC}"
+        echo -ne "${RED} ===> 输入无效，请输入 'ok'： ${NC}"
     fi
 done
 
@@ -253,9 +253,9 @@ echo -e " ===> [2/$TOTAL_STEPS] 正在清理旧内核与无用依赖 ... ${NC}"
 dpkg --configure -a || true
 apt --fix-broken install -y || true
 
-echo -e "\n${GREEN} 正在确认当前内核... ${NC}"
+echo -e "\n${GREEN} ===> 正在确认当前内核... ${NC}"
 CURRENT_KERNEL=$(uname -r)
-echo -e "${GREEN} ===> 当前运行内核${NC}: $CURRENT_KERNEL "
+echo -e "${GREEN} 当前运行内核${NC}: $CURRENT_KERNEL "
 sleep 1s
 
 # 构造当前运行内核的完整包名
@@ -272,7 +272,7 @@ OLD_IMAGES=$(dpkg-query -W -f='${db:Status-Status} ${Package}\n' | grep '^instal
 
 if [ -n "$OLD_IMAGES" ]; then
     echo -e "${GREEN} ===> 正在清理旧版本 Linux 内核： ${NC}"
-    echo -e "${RED}$OLD_IMAGES${NC}"
+    echo -e "${RED} $OLD_IMAGES ${NC}\n"
     
     # 清除旧内核
     echo "$OLD_IMAGES" | xargs -r apt purge -y
@@ -311,7 +311,7 @@ echo -e " ===> [3/$TOTAL_STEPS] 正在执行最终清理 ... ${NC}"
 sed -i '/# \[Server-init\] Stage 2 Reminder/,/fi/d' /root/.bashrc
 
 # 删除多余脚本
-rm init-clean.sh SSH_GUIDE.txt
+rm init-clean.sh SSH_GUIDE.md
 echo " 未使用的 init-clean.sh 脚本清理已完成 "
 
 # apt 缓存清理
