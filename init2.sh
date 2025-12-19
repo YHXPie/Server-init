@@ -79,7 +79,7 @@ sleep 1s
 # 随机忽略在主配置文件文件下面写的 'PasswordAuthentication no'
 # 要在自动化脚本里彻底解决这个问题，最暴力且有效的方法是：
 # 直接清空该目录下的干扰文件，或者直接注释掉 Include 指令
-echo -e "\n${RED} ===> 正在清理 SSH Drop-in 配置文件... ${NC}"
+echo -e "\n${GREEN} ===> 正在清理 SSH Drop-in 配置文件... ${NC}"
 if [ -d "/etc/ssh/sshd_config.d" ]; then
     # 创建备份以防万一
     cp -r /etc/ssh/sshd_config.d /etc/ssh/sshd_config.d.bak
@@ -105,11 +105,11 @@ while true; do
     # 格式验证：如果看起来不像标准 SSH 公钥
     if [[ "$PUB_KEY" != ssh-* ]]; then
         echo -e "\n${RED} 警告: 输入的内容看起来不像标准的 SSH 公钥 (不以 ssh- 开头) ${NC}"
-        echo -en "\n${RED} 是否继续? [y/N]: ${NC}"
+        echo -en "\n${GREEN} 是否继续? [y/N]: ${NC}"
         read -r CONFIRM < /dev/tty
 
         if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
-            echo -e "${RED} 请重新输入 SSH 公钥 ${NC}"
+            echo -e "\n${RED} 请重新输入 SSH 公钥 ${NC}"
             continue
         fi
     fi
@@ -198,7 +198,7 @@ ensure_config "ChallengeResponseAuthentication" "no"
 sleep 1s
 
 # 给 Root 也配上一份密钥，作为 SSH 备用通道
-echo -e "\n${GREEN} 正在同步公钥给 Root 用户... ${NC}"
+echo -e "\n${GREEN} ===> 正在同步公钥给 Root 用户... ${NC}"
 mkdir -p /root/.ssh
 echo "$PUB_KEY" > /root/.ssh/authorized_keys
 chmod 700 /root/.ssh
@@ -272,8 +272,9 @@ CURRENT_KERNEL_PKG="linux-image-$(uname -r)"
 OLD_IMAGES=$(dpkg-query -W -f='${db:Status-Status} ${Package}\n' | grep '^installed' | awk '{print $2}' | grep -E "^linux-image-[0-9]" | grep -v "$CURRENT_KERNEL_PKG" || true)
 
 if [ -n "$OLD_IMAGES" ]; then
-    echo -e "${GREEN} ===> 正在清理旧版本 Linux 内核： ${NC}"
-    echo -e "${RED} $OLD_IMAGES ${NC}\n"
+    echo -e "\n${GREEN} ===> 正在清理旧版本 Linux 内核： ${NC}"
+    echo -e "${RED} $OLD_IMAGES ${NC}"
+    echo
     
     # 清除旧内核
     echo "$OLD_IMAGES" | xargs -r apt purge -y
