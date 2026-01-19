@@ -46,28 +46,28 @@ TOTAL_STEPS=10
 
 # ===> 输出基本内容
 echo -e "\n${RED} ===> 执行内容：${NC}"
-echo -e "\n${GREEN} 0. 设置主机名称 "
-echo -e " 1. 设置 Asia/Shanghai 时区 "
-echo -e " 2. 启用系统 BBR 算法 "
-echo -e " 3. 配置 Swap 交换空间 "
-echo -e " 4. 调整 apt 源并配置软件、系统更新 "
-echo -e " 5. 启用 ufw 防火墙 "
-echo -e " 6. 配置防爆破组件 "
-echo -e " 7. 执行系统内核更新 "
-echo -e " 8. 卸载 Ubuntu Snap "
+echo -e "\n${GREEN} 1. 设置主机名称 "
+echo -e " 2. 设置 Asia/Shanghai 时区 "
+echo -e " 3. 启用系统 BBR 算法 "
+echo -e " 4. 配置 Swap 交换空间 "
+echo -e " 5. 调整 apt 源并配置软件、系统更新 "
+echo -e " 6. 启用 ufw 防火墙 "
+echo -e " 7. 配置防爆破组件 "
+echo -e " 8. 系统内核更新 "
 echo -e " 9. 系统磁盘空间优化 "
 echo -e " 10. 可选：安装增强性组件 "
 echo -e "     - 面板 / Docker ... ${NC}"
 echo -e "\n ${RED} 执行时建议时刻保持状态监控 ${NC}"
 echo -e "\n 等待 5 秒... "
 sleep 5s
+clear
 
-# ===> 0. 交互式修改主机名
-echo -e "\n${GREEN} [0/$TOTAL_STEPS] ===> 主机名配置 ${NC}"
+# ===> 1. 交互式修改主机名
+echo -e "${GREEN} [1/$TOTAL_STEPS] ===> 主机名配置 ${NC}"
+sleep 1s
 echo -e " 当前主机名: ${GREEN} $(hostname) ${NC}"
 echo -ne "\n${GREEN} 是否需要修改主机名? [y/N]: ${NC}"
 read -r CHANGE_HOSTNAME < /dev/tty
-sleep 1s
 
 if [[ "$CHANGE_HOSTNAME" =~ ^[Yy]$ ]]; then
     while true; do
@@ -82,22 +82,19 @@ if [[ "$CHANGE_HOSTNAME" =~ ^[Yy]$ ]]; then
             break
         fi
 
-        # 核心验证逻辑
-        # 正则含义：
-        # ^[a-zA-Z0-9]      : 必须以字母或数字开头
-        # [-a-zA-Z0-9]* : 中间可以包含字母、数字或连字符
-        # [a-zA-Z0-9]$      : 必须以字母或数字结尾 (防止以 - 结尾)
-        # {1,63}            : 长度限制 (可选，通常不超过 63 字符)
-        # ! ... =~          : 如果不匹配则报错
+        # 核心验证逻辑 正则含义：
+        # ^[a-zA-Z0-9]    : 必须以字母或数字开头
+        # [-a-zA-Z0-9]*   : 中间可以包含字母、数字或连字符
+        # [a-zA-Z0-9]$    : 必须以字母或数字结尾 (防止以 - 结尾)
+        # {1,63}          : 长度限制 (可选，通常不超过 63 字符)
+        # ! ... =~        : 如果不匹配则报错
         if [[ ! "$NEW_HOSTNAME" =~ ^[a-zA-Z0-9][-a-zA-Z0-9]*[a-zA-Z0-9]$ ]] && [[ ! "$NEW_HOSTNAME" =~ ^[a-zA-Z0-9]$ ]]; then
-            echo -e "\n${RED} 错误：主机名格式不合法 ${NC}"
+            echo -e "\n${RED} 错误：主机名格式不合法，请重新设置 ${NC}"
             continue
         fi
 
         # 执行修改
         echo -e "\n${GREEN} 正在设置... ${NC}"
-        
-        # 尝试设置，如果 hostnamectl 依然报错，则捕获错误并不让脚本退出
         if hostnamectl set-hostname "$NEW_HOSTNAME"; then
             # 尝试修正 /etc/hosts 里的记录，防止 sudo 解析慢
             if grep -q "^127.0.1.1" /etc/hosts; then
@@ -111,7 +108,7 @@ if [[ "$CHANGE_HOSTNAME" =~ ^[Yy]$ ]]; then
             sleep 3s
             break
         else
-            echo -e "\n${RED} hostnamectl 设置失败，请重试或检查名称是否过长 ${NC}"
+            echo -e "\n${RED} hostnamectl 设置失败，请重试 ${NC}"
             continue
         fi
     done
@@ -122,15 +119,15 @@ else
 fi
 clear
 
-# ===> 1. 设置时区
-echo -e "${GREEN} ===> [1/$TOTAL_STEPS] 正在设置时区为 Asia/Shanghai... ${NC}"
+# ===> 2. 设置时区
+echo -e "${GREEN} [1/$TOTAL_STEPS] 设置主机名称... DONE √ "
+echo -e " ===> [2/$TOTAL_STEPS] 正在设置时区为 Asia/Shanghai... ${NC}"
 sleep 1s
 timedatectl set-timezone Asia/Shanghai
 
 # 同步时间
 # 部分 Debian 可能默认没有安装 ntp 服务
 timedatectl set-ntp true || true
-sleep 1s
 
 # 重启时间同步服务，确保立即生效
 # 加 true 防止部分 Minimal 系统没有该服务报错
@@ -142,14 +139,14 @@ sleep 1s
 
 # 显示时间
 echo -e "\n${RED} 当前时间${NC}: $(date)"
-    
 echo -e "${GREEN} ===> Done. ${NC}"
 sleep 3s
 clear
 
-# ===> 2. 启用系统 TCP BBR
-echo -e "${GREEN} [1/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
-echo -e " ===> [2/$TOTAL_STEPS] 配置 TCP BBR... ${NC}"
+# ===> 3. 启用系统 TCP BBR
+echo -e "${GREEN} [1/$TOTAL_STEPS] 设置主机名称... DONE √ "
+echo -e " [2/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
+echo -e " ===> [3/$TOTAL_STEPS] 配置 TCP BBR... ${NC}"
 sleep 1s
 
 if ! grep -q "net.ipv4.tcp_congestion_control=bbr" /etc/sysctl.conf; then
@@ -165,10 +162,11 @@ else
 fi
 clear
 
-# ===> 3. 配置 Swap
-echo -e "${GREEN} [1/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
-echo -e " [2/$TOTAL_STEPS] 配置 TCP BBR... DONE √ "
-echo -e " ===> [3/$TOTAL_STEPS] 检查并配置 Swap... ${NC}"
+# ===> 4. 配置 Swap
+echo -e "${GREEN} [1/$TOTAL_STEPS] 设置主机名称... DONE √ "
+echo -e " [2/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
+echo -e " [3/$TOTAL_STEPS] 配置 TCP BBR... DONE √ "
+echo -e " ===> [4/$TOTAL_STEPS] 检查并配置 Swap... ${NC}"
 sleep 1s
 
 # 检查是否已经存在 swapfile
@@ -179,15 +177,15 @@ else
     # 获取物理内存大小 (MB)
     MEM_Total=$(free -m | awk '/Mem:/ { print $2 }')
     echo -e "\n${GREEN} 检测到系统内存: ${MEM_Total} MB ${NC}"
-
-    echo -e "\n${RED} 请选择要创建的 Swap 大小： \n${NC}"
-    echo -e "${GREEN} A) 2GB${NC} - 适合高负载环境 "
+    echo -e "\n${RED} 请选择要创建的 Swap 大小： ${NC}"
+    echo -e "${GREEN} A) 2GB${NC} "
     echo -e "${GREEN} B) 1GB${NC} - 默认推荐配置 "
-    echo -e "${GREEN} C) 512MB${NC} - 小内存配置 "
-    echo -e "${GREEN} D) 256MB${NC} - 极小内存配置 "
-    echo -e "${GREEN} E) 32MB${NC} - 为了创建而创建 "
-    echo -e "${GREEN} F)${NC} 跳过 "
-    echo -ne "\n${RED} ===> 请输入选项 [A-F]: ${NC}"
+    echo -e "${GREEN} C) 512MB${NC} "
+    echo -e "${GREEN} D) 256MB${NC} "
+    echo -e "${GREEN} E) 128MB${NC} "
+    echo -e "${GREEN} F) 32MB${NC} - 为了创建而创建 "
+    echo -e "${GREEN} G)${NC} 跳过 "
+    echo -ne "\n${RED} ===> 请输入选项 [A-G]: ${NC}"
     read -r SWAP_CHOICE < /dev/tty
     sleep 1s
 
@@ -205,16 +203,17 @@ else
             SWAP_SIZE=256M
             ;;
         [eE])
+            SWAP_SIZE=128M
+            ;;
+        [fF])
             SWAP_SIZE=32M
             ;;
         *)
-            # 如果选了 F 或者输入错误，直接输出提示并利用 continue 或 if 跳过后续步骤
             echo -e "\n${GREEN} 已跳过 Swap 配置 ${NC}"
             SWAP_SIZE=""
             ;;
     esac
 
-    # 只有在 SWAP_SIZE 不为空时才执行创建逻辑
     if [ -n "$SWAP_SIZE" ]; then
         echo -e "\n${GREEN} ===> 正在创建 ${SWAP_SIZE} Swap... ${NC}"
         fallocate -l $SWAP_SIZE /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=$(echo $SWAP_SIZE | sed 's/G/*1024/;s/M//' | bc)
@@ -222,25 +221,27 @@ else
         mkswap /swapfile
         swapon /swapfile
         echo '/swapfile none swap sw 0 0' >> /etc/fstab
-        echo -e "${GREEN} Swap 创建完成. ${NC}"
+        echo -e "\n${GREEN} Swap 创建完成. ${NC}"
         echo -e "${GREEN} ===> Done. ${NC}"
         sleep 3s
     fi
 fi
 clear
 
-# ===> 4. 配置 apt 源与基础软件
-echo -e "${GREEN} [1/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
-echo -e " [2/$TOTAL_STEPS] 配置 TCP BBR... DONE √ "
-echo -e " [3/$TOTAL_STEPS] 检查并配置 Swap... DONE √ "
-echo -e " ===> [4/$TOTAL_STEPS] 正在更新 apt 源... "
+# ===> 5. 配置 apt 源与基础软件
+echo -e "${GREEN} [1/$TOTAL_STEPS] 设置主机名称... DONE √ "
+echo -e " [2/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
+echo -e " [3/$TOTAL_STEPS] 配置 TCP BBR... DONE √ "
+echo -e " [4/$TOTAL_STEPS] 检查并配置 Swap... DONE √ "
+echo -e " ===> [5/$TOTAL_STEPS] 正在更新 apt 源... "
 sleep 1s
 
-
-# 在开始前，先检查并修复可能中断的包管理器状态
-echo -e "\n${GREEN} 正在检查包管理器状态... ${NC}"
+# 预定义修复 apt 包管理器的逻辑
+function check_and_fix_apt() {
+echo -e "\n${GREEN} 正在检查 apt 包管理器状态... ${NC}"
 apt --fix-broken install -y || true
 sleep 1s
+}
 
 # ===> 预定义获取服务器地区的逻辑
 function check_network_region() {
@@ -311,9 +312,10 @@ function change_apt_source() {
 }
 
 # ===> 逻辑开始
+check_and_fix_apt
 
 # ===> 第一次确定地区
-echo -e "\n${GREEN} 正在确定服务器地区信息... (1/5) ${NC}"
+echo -e "\n${GREEN} 正在确定服务器地区信息... ${NC}"
 SERVER_LOCATION=$(check_network_region)
 sleep 1s
 
@@ -330,7 +332,6 @@ if [ "$SERVER_LOCATION" = "UNKNOWN" ]; then
     # 1. 强制切到 NJU HTTP 源
     change_apt_source "CNMainLand"
     apt update -y
-    sleep 1s
     
     # 2. 更新并安装必备检测工具
     apt install -y curl wget
@@ -338,7 +339,6 @@ if [ "$SERVER_LOCATION" = "UNKNOWN" ]; then
     
     # 3. 第二次确定地区，现在可以正常使用 wget 或者 curl 工具
     SERVER_LOCATION=$(check_network_region)
-    sleep 1s
     
     # 4. 根据真实结果修正源
     if [ "$SERVER_LOCATION" = "GLOBAL" ]; then
@@ -353,16 +353,14 @@ else
         # 对于海外服务器则无需换源
     fi
 fi
-echo -e "\n${GREEN} ===> Partly Done. (1/5) ${NC}"
+echo -e "\n${GREEN} ===> Partly Done. (1/6) ${NC}"
 sleep 1s
 clear
 
 # ===> 换源逻辑完成，开始切换至 HTTPS
-echo -e "\n${GREEN} apt 源将切换至 https 模式 (2/5) ${NC}"
+echo -e "\n${GREEN} apt 源将切换至 https 模式 (2/6) ${NC}"
 sleep 1s
 
-# 这一步对于 Ubuntu 24.04 有点特殊，它的源格式变了：/etc/apt/sources.list.d/ubuntu.sources
-# 简单的 sed 替换在旧版有效，新版可能无效
 # 对于自动化处理，建议主要依赖 install transport-https
 apt install -y apt-transport-https ca-certificates
 sleep 1s
@@ -385,27 +383,48 @@ if [ -n "$APT_FILE" ]; then
 else
     echo -e "${GREEN} 未找到标准的 apt 源文件，跳过 https 切换 ${NC}"
 fi
-echo -e "\n${GREEN} ===> Partly Done. (2/5) ${NC}"
+echo -e "\n${GREEN} ===> Partly Done. (2/6) ${NC}"
 sleep 1s
 clear
 
-echo -e "\n${GREEN} 正在更新软件包列表... (3/5) ${NC}"
+echo -e "\n${GREEN} 正在更新软件包列表... (3/6) ${NC}"
 apt update
-echo -e "\n${GREEN} ===> Partly Done. (3/5) ${NC}"
-sleep 1s
-clear
-
-echo -e "\n${GREEN} 正在安装基础软件... (4/5) ${NC}"
-# 安装基础软件
-PACKAGES="sudo vim nano ufw bash curl wget htop qemu-guest-agent locales systemd-timesyncd"
-
-echo -e "\n${GREEN} ===> 即将安装：$PACKAGES ${NC}"
-
 # 直接卸载 needrestart，避免干扰运行
 if dpkg -l | grep -q needrestart; then
     apt purge -y needrestart
 fi
 sleep 1s
+echo -e "\n${GREEN} ===> Partly Done. (3/6) ${NC}"
+sleep 1s
+clear
+
+echo -e "\n${GREEN} 正在移除 Ubuntu Snap... (4/6) ${NC}"
+if grep -q "Ubuntu" /etc/issue; then
+    if command -v snap &> /dev/null; then
+        echo -e "\n${GREEN} 检测到 Snap，正在移除... ${NC}"
+        sleep 1s
+        # 彻底移除 snap 需要一点耐心
+        systemctl stop snapd.service || true
+        systemctl stop snapd.socket || true
+        apt purge snapd -y
+        rm -rf /root/snap /snap /var/snap /var/lib/snapd
+        sleep 1s
+        apt-mark hold snap
+        echo -e "\n${GREEN} ===> Partly Done. (4/6) ${NC}"
+        sleep 3s
+    else
+        echo -e "\n${GREEN} Snap 未安装，跳过当前步骤 ${NC}"
+        sleep 1s
+    fi
+else
+    echo -e "${GREEN} ===> 非 Ubuntu 系统，跳过当前步骤 ${NC}"
+    sleep 1s
+fi
+clear
+
+echo -e "\n${GREEN} 正在安装基础软件... (5/6) ${NC}"
+PACKAGES="sudo vim nano ufw bash curl wget htop qemu-guest-agent locales systemd-timesyncd"
+echo -e "\n${GREEN} ===> 即将安装：$PACKAGES ${NC}"
 
 apt install -y $PACKAGES
 
@@ -427,27 +446,28 @@ if [ "$TIME_SYNC_AGAIN" = "yes" ]; then
     sleep 1s
     sudo timedatectl set-local-rtc 0 || true
     timedatectl
-    echo -e "\n${GREEN} 当前时间${NC}: $(date)"
+    echo -e " 当前时间${NC}: $(date) "
 fi
 sleep 1s
 
-echo -e "\n${GREEN} ===> Partly Done. (4/5) ${NC}"
+echo -e "\n${GREEN} ===> Partly Done. (5/6) ${NC}"
 sleep 1s
 clear
 
-echo -e "\n${GREEN} ===> 正在更新系统及软件... (5/5) ${NC}"
+echo -e "\n${GREEN} ===> 正在更新系统及软件... (6/6) ${NC}"
 apt upgrade -y
 echo -e "\n${GREEN} 系统更新完毕 ${NC}"
-echo -e "\n${GREEN} ===> Done. (5/5) ${NC}"
+echo -e "${GREEN} ===> Done. ${NC}"
 sleep 3s
 clear
 
-# ===> 5. 配置 ufw 防火墙
-echo -e "${GREEN} [1/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
-echo -e " [2/$TOTAL_STEPS] 配置 TCP BBR... DONE √ "
-echo -e " [3/$TOTAL_STEPS] 检查并配置 Swap... DONE √ "
-echo -e " [4/$TOTAL_STEPS] 正在更新 apt 源... DONE √ "
-echo -e " ===> [5/$TOTAL_STEPS] 配置 ufw 防火墙... ${NC}"
+# ===> 6. 配置 ufw 防火墙
+echo -e "${GREEN} [1/$TOTAL_STEPS] 设置主机名称... DONE √ "
+echo -e " [2/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
+echo -e " [3/$TOTAL_STEPS] 配置 TCP BBR... DONE √ "
+echo -e " [4/$TOTAL_STEPS] 检查并配置 Swap... DONE √ "
+echo -e " [5/$TOTAL_STEPS] 配置 apt 源与基础软件... DONE √ "
+echo -e " ===> [6/$TOTAL_STEPS] 配置 ufw 防火墙... ${NC}"
 
 # 设置默认策略：拒绝入站，允许出站
 ufw default deny incoming
@@ -462,7 +482,7 @@ ufw allow 80/tcp
 ufw allow 443/tcp
 
 # 启用防火墙
-# 使用 --force 参数来避免 "Command may disrupt existing ssh connections" 的交互式确认
+# 使用 --force 参数来避免交互式确认
 echo -e "\n${GREEN} 正在启用 ufw 防火墙... ${NC}"
 ufw --force enable
 
@@ -473,26 +493,23 @@ echo -e "${GREEN} ===> Done. ${NC}"
 sleep 3s
 clear
 
-# ===> 6. 交互式选择安全组件
-echo -e "${GREEN} [1/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
-echo -e " [2/$TOTAL_STEPS] 配置 TCP BBR... DONE √ "
-echo -e " [3/$TOTAL_STEPS] 检查并配置 Swap... DONE √ "
-echo -e " [4/$TOTAL_STEPS] 正在更新 apt 源... DONE √ "
-echo -e " [5/$TOTAL_STEPS] 配置 ufw 防火墙... DONE √ "
-echo -e " ===> [6/$TOTAL_STEPS] 配置安全组件... ${NC}"
+# ===> 7. 交互式选择安全组件
+echo -e "${GREEN} [1/$TOTAL_STEPS] 设置主机名称... DONE √ "
+echo -e " [2/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
+echo -e " [3/$TOTAL_STEPS] 配置 TCP BBR... DONE √ "
+echo -e " [4/$TOTAL_STEPS] 检查并配置 Swap... DONE √ "
+echo -e " [5/$TOTAL_STEPS] 配置 apt 源与基础软件... DONE √ "
+echo -e " [6/$TOTAL_STEPS] 配置 ufw 防火墙... DONE √ "
+echo -e " ===> [7/$TOTAL_STEPS] 配置安全组件... ${NC}"
 sleep 1s
 echo -e "\n${RED} 选择要安装的安全防护工具： \n${NC}"
 echo -e "${GREEN} 1) ${NC} Fail2ban (${GREEN} 默认 ${NC} - 功能强大但负载占用稍高) "
 echo -e "${GREEN} 2) ${NC} SSHGuard (更加轻量，资源占用更低) "
 echo -ne "\n${RED} 请输入选项 [1/2] : ${NC}"
-
-# 从 tty 读取输入
 read -r SECURITY_CHOICE < /dev/tty
 
-apt --fix-broken install -y || true
-sleep 1s
-
-# 逻辑判断：只有输入 2 才安装 SSHGuard，其他情况直接安装 Fail2ban
+check_and_fix_apt
+# 只有输入 2 才安装 SSHGuard，其他情况直接安装 Fail2ban
 if [[ "$SECURITY_CHOICE" == "2" ]]; then
     # 选项 B: SSHGuard 
     echo -e "\n${GREEN} ===> 已选择: SSHGuard ${NC}"
@@ -552,29 +569,30 @@ mode    = normal
 EOF
     # Debian/Ubuntu 现代版通常不需要指定 logpath，会自动监测 systemd journal
     # 但显式指定 backend 为 systemd 更稳妥
-
     sleep 1s
     # 重启服务
     systemctl restart fail2ban
     systemctl enable fail2ban
-    echo -e "\n${GREEN} ===> Fail2ban 已启动 "
+    echo -e "\n${GREEN} Fail2ban 已启动 "
     echo -e "${GREEN} 防护策略: 10 分钟错误 5 次 → 封禁 24 小时 ${NC}"
 fi
 echo -e "\n${GREEN} ===> Done. ${NC}"
 sleep 3s
 clear
 
-# ===> 7. 系统内核更新
-echo -e "${GREEN} [1/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
-echo -e " [2/$TOTAL_STEPS] 配置 TCP BBR... DONE √ "
-echo -e " [3/$TOTAL_STEPS] 检查并配置 Swap... DONE √ "
-echo -e " [4/$TOTAL_STEPS] 正在更新 apt 源... DONE √ "
-echo -e " [5/$TOTAL_STEPS] 配置 ufw 防火墙... DONE √ "
-echo -e " [6/$TOTAL_STEPS] 配置安全组件... DONE √ "
-echo -e " ===> [7/$TOTAL_STEPS] 检查内核更新... ${NC}"
+# ===> 8. 系统内核更新
+echo -e "${GREEN} [1/$TOTAL_STEPS] 设置主机名称... DONE √ "
+echo -e " [2/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
+echo -e " [3/$TOTAL_STEPS] 配置 TCP BBR... DONE √ "
+echo -e " [4/$TOTAL_STEPS] 检查并配置 Swap... DONE √ "
+echo -e " [5/$TOTAL_STEPS] 配置 apt 源与基础软件... DONE √ "
+echo -e " [6/$TOTAL_STEPS] 配置 ufw 防火墙... DONE √ "
+echo -e " [7/$TOTAL_STEPS] 配置安全组件... DONE √ "
+echo -e " ===> [8/$TOTAL_STEPS] 检查内核更新... ${NC}"
+sleep 1s
+
 KERNEL_VERSION=$(uname -r)
 echo -e "\n${GREEN} 当前内核: $KERNEL_VERSION ${NC}" 
-sleep 1s
 
 # 判断是否为云厂商专用内核 (Azure, GCP, AWS, Oracle)
 if [[ "$KERNEL_VERSION" == *"azure"* ]] || \
@@ -587,10 +605,11 @@ if [[ "$KERNEL_VERSION" == *"azure"* ]] || \
 else
     # 仅在 Ubuntu 下尝试安装 HWE
     if grep -q "Ubuntu" /etc/issue; then
-        echo -ne "\n${GREEN} 是否需要安装 HWE 硬件增强堆栈内核? [y/N]: ${NC}"
+        echo -ne "\n${GREEN} 是否需要安装 Ubuntu HWE 硬件增强堆栈内核? [y/N]: ${NC}"
         read -r INSTALL_HWE_KERNEL < /dev/tty
         if [[ "$INSTALL_HWE_KERNEL" =~ ^[Yy]$ ]]; then
             echo -e "\n${GREEN} 正在准备 HWE 内核更新... ${NC}"
+            check_and_fix_apt
             apt install -y --no-install-recommends linux-generic-hwe-$(lsb_release -rs) || echo -e "${GREEN} HWE 安装跳过或已是最新 ${NC}"
         else
             echo -e "${GREEN} HWE 内核安装跳过 ${NC}"
@@ -605,48 +624,15 @@ else
 fi
 clear
 
-# ===> 8. 移除 Snap (对于 Ubuntu)
-echo -e "${GREEN} [1/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
-echo -e " [2/$TOTAL_STEPS] 配置 TCP BBR... DONE √ "
-echo -e " [3/$TOTAL_STEPS] 检查并配置 Swap... DONE √ "
-echo -e " [4/$TOTAL_STEPS] 正在更新 apt 源... DONE √ "
-echo -e " [5/$TOTAL_STEPS] 配置 ufw 防火墙... DONE √ "
-echo -e " [6/$TOTAL_STEPS] 配置安全组件... DONE √ "
-echo -e " [7/$TOTAL_STEPS] 检查内核更新... DONE √ ${NC}"
-if grep -q "Ubuntu" /etc/issue; then
-    echo -e "\n${GREEN} ===> [8/$TOTAL_STEPS] 处理 Snap... ${NC}"
-    if command -v snap &> /dev/null; then
-        echo -e "\n${GREEN} 检测到 Snap，正在移除... ${NC}"
-        sleep 1s
-        # 彻底移除 snap 需要一点耐心
-        systemctl stop snapd.service || true
-        systemctl stop snapd.socket || true
-        apt purge snapd -y
-        rm -rf /root/snap /snap /var/snap /var/lib/snapd
-        sleep 1s
-        apt-mark hold snap
-        echo -e "\n${GREEN} Snap 已移除并锁定 ${NC}"
-        echo -e "${GREEN} ===> Done. ${NC}"
-        sleep 3s
-    else
-        echo -e "\n${GREEN} Snap 未安装，跳过当前步骤 ${NC}"
-        sleep 1s
-    fi
-else
-    echo -e "${GREEN} ===> [8/$TOTAL_STEPS] 非 Ubuntu 系统，跳过 Snap 清理步骤 ${NC}"
-    sleep 1s
-fi
-clear
-
 # ===> 9. 磁盘空间优化
-echo -e "${GREEN} [1/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
-echo -e " [2/$TOTAL_STEPS] 配置 TCP BBR... DONE √ "
-echo -e " [3/$TOTAL_STEPS] 检查并配置 Swap... DONE √ "
-echo -e " [4/$TOTAL_STEPS] 正在更新 apt 源... DONE √ "
-echo -e " [5/$TOTAL_STEPS] 配置 ufw 防火墙... DONE √ "
-echo -e " [6/$TOTAL_STEPS] 配置安全组件... DONE √ "
-echo -e " [7/$TOTAL_STEPS] 检查内核更新... DONE √ "
-echo -e " [8/$TOTAL_STEPS] 处理 Snap... DONE √ "
+echo -e "${GREEN} [1/$TOTAL_STEPS] 设置主机名称... DONE √ "
+echo -e " [2/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
+echo -e " [3/$TOTAL_STEPS] 配置 TCP BBR... DONE √ "
+echo -e " [4/$TOTAL_STEPS] 检查并配置 Swap... DONE √ "
+echo -e " [5/$TOTAL_STEPS] 配置 apt 源与基础软件... DONE √ "
+echo -e " [6/$TOTAL_STEPS] 配置 ufw 防火墙... DONE √ "
+echo -e " [7/$TOTAL_STEPS] 配置安全组件... DONE √ "
+echo -e " [8/$TOTAL_STEPS] 检查内核更新... DONE √ "
 echo -e " ===> [9/$TOTAL_STEPS] 磁盘空间优化... ${NC}"
 # 只有 ext4 文件系统支持 tune2fs，执行前需要判断。
 ROOT_FS=$(df -T / | awk 'NR==2 {print $2}')
@@ -654,7 +640,6 @@ if [ "$ROOT_FS" == "ext4" ]; then
     # 获取根目录分区名
     ROOT_DEV=$(findmnt / -o SOURCE -n)
     # 建议留 1% 给 root 救急，改成 0 有极端风险
-    sleep 1s
     tune2fs -m 1 "$ROOT_DEV" 
     echo -e "\n${GREEN} 已将 $ROOT_DEV 的保留空间调整为 1% ${NC}"
     echo -e "${GREEN} ===> Done. ${NC}"
@@ -666,24 +651,23 @@ fi
 clear
 
 # ===> 10. 安装增强性组件
-echo -e "${GREEN} [1/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
-echo -e " [2/$TOTAL_STEPS] 配置 TCP BBR... DONE √ "
-echo -e " [3/$TOTAL_STEPS] 检查并配置 Swap... DONE √ "
-echo -e " [4/$TOTAL_STEPS] 正在更新 apt 源... DONE √ "
-echo -e " [5/$TOTAL_STEPS] 配置 ufw 防火墙... DONE √ "
-echo -e " [6/$TOTAL_STEPS] 配置安全组件... DONE √ "
-echo -e " [7/$TOTAL_STEPS] 检查内核更新... DONE √ "
-echo -e " [8/$TOTAL_STEPS] 处理 Snap... DONE √ "
+echo -e "${GREEN} [1/$TOTAL_STEPS] 设置主机名称... DONE √ "
+echo -e " [2/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... DONE √ "
+echo -e " [3/$TOTAL_STEPS] 配置 TCP BBR... DONE √ "
+echo -e " [4/$TOTAL_STEPS] 检查并配置 Swap... DONE √ "
+echo -e " [5/$TOTAL_STEPS] 配置 apt 源与基础软件... DONE √ "
+echo -e " [6/$TOTAL_STEPS] 配置 ufw 防火墙... DONE √ "
+echo -e " [7/$TOTAL_STEPS] 配置安全组件... DONE √ "
+echo -e " [8/$TOTAL_STEPS] 检查内核更新... DONE √ "
 echo -e " [9/$TOTAL_STEPS] 磁盘空间优化... DONE √ "
 echo -e " ===> [10/$TOTAL_STEPS] 安装增强性组件... ${NC}"
 sleep 1s
-
 echo -e "${GREEN} 服务器面板/ Docker 环境安装 ${NC}"
 
 echo -e "\n${RED} 请选择要安装的面板： \n${NC}"
-echo -e "${GREEN} A) 宝塔面板${NC} - 最新版 (v11.4.0) "
+echo -e "${GREEN} A) 宝塔面板${NC} - 最新版 (v11.5.0) "
 echo -e "${GREEN} B) 宝塔面板${NC} - 稳定版 (v10.0) "
-echo -e "${GREEN} C) aaPanel${NC} - 宝塔国际版 (v7.0.28) (English Only) "
+echo -e "${GREEN} C) aaPanel${NC} - 宝塔国际版 (v7.0.39) (English Only) "
 echo -e "${GREEN} D) 1Panel${NC} - 容器化面板 (自带 Docker) "
 echo -e "${GREEN} E)${NC} 跳过面板安装步骤 "
 echo -ne "\n${RED} 请输入选项 [A-E]: ${NC}"
@@ -695,10 +679,9 @@ function wait_for_ok() {
     echo -e "${RED} 请务必保存上方的面板登录信息 ${NC}"
     while true; do
         echo -ne "\n${RED} ===> 输入 'ok' 以继续... (Type 'ok' to continue): ${NC}"
-        # 强制从终端读取，防止管道干扰
         read -r CONFIRM < /dev/tty
         if [[ "$CONFIRM" == "ok" ]] || [[ "$CONFIRM" == "OK" ]]; then
-            echo -e "\n${GREEN} 确认成功，继续执行... ${NC}"
+            echo -e "${GREEN} 确认成功，继续执行... ${NC}"
             break
         else
             echo -e "\n${RED} ===> 输入 'ok' 以继续... (Type 'ok' to continue): ${NC}"
@@ -706,8 +689,78 @@ function wait_for_ok() {
     done
 }
 
-# ===> 预定义 Docker 安装步骤
-function install_docker() {
+# ===> 开始面板安装逻辑
+check_and_fix_apt
+
+case $PANEL_CHOICE in
+# 面板安装脚本将统一命名为 install_panel.sh 方便清理
+    [aA])
+    # https://www.bt.cn/new/download.html
+        echo -e "\n${GREEN} ===> 安装宝塔最新版... "
+        echo -e " 请先根据安装脚本提示就行操作... ${NC}"
+        wget --tries=5 --timeout=25 -O install_panel.sh https://download.bt.cn/install/install_latest.sh
+        bash install_panel.sh  ssl251210
+        INSTALLED_PANEL=" 宝塔面板 - 最新版 "
+        NEED_DOCKER_ASK=true
+        ;;
+    [bB])
+    # https://www.bt.cn/new/download.html
+        echo -e "\n${GREEN} ===> 安装宝塔稳定版... "
+        echo -e " 请先根据安装脚本提示就行操作... ${NC}"
+        sleep 3s
+        wget --tries=5 --timeout=25 -O install_panel.sh https://download.bt.cn/install/installStable.sh
+        bash install_panel.sh ed8484bec
+        INSTALLED_PANEL=" 宝塔面板 - 稳定版 v10.0 "
+        NEED_DOCKER_ASK=true
+        ;;
+    [cC])
+    # https://www.bt.cn/new/download.html
+        echo -e "\n${GREEN} ===> 安装宝塔国际版 aaPanel ... "
+        echo -e " 请先根据安装脚本提示就行操作... ${NC}"
+        sleep 3s
+        wget --tries=5 --timeout=25 --no-check-certificate -O install_panel.sh https://www.aapanel.com/script/install_7.0_en.sh
+        bash install_panel.sh aapanel
+        INSTALLED_PANEL=" aaPanel v7.0.27 "
+        NEED_DOCKER_ASK=true
+        ;;
+    [dD])
+    # https://1panel.cn/#quickstart
+        echo -e "\n${GREEN} ===> 安装 1Panel ... "
+        echo -e " 请先根据安装脚本提示就行操作，并直接安装 Docker... ${NC}"
+        echo -e "${RED} 请注意，后续步骤中将不再单独安装 Docker ${NC}"
+        sleep 3s
+        wget --tries=5 --timeout=25 -O install_panel.sh https://resource.fit2cloud.com/1panel/package/v2/quick_start.sh
+        bash install_panel.sh
+        INSTALLED_PANEL=" 1Panel "
+        NEED_DOCKER_ASK=false
+        sleep 3s
+        ;;
+    *)
+        echo -e "\n${GREEN} 已跳过面板安装 ${NC}"
+        NEED_SAVE_PANEL_INFO=false
+        NEED_DOCKER_ASK=true
+        ;;
+esac
+
+# ===> 宝塔/aaPanel 后续逻辑
+if [ "$NEED_SAVE_PANEL_INFO" != false ]; then
+    # 确认保存登录信息
+    echo -e "\n${GREEN} ===> Partly Done. (1/2) ${NC}"
+    wait_for_ok
+    sleep 1s
+fi
+
+# 用 ufw 强制关掉不安全的端口
+ufw delete allow 20/tcp >/dev/null 2>&1 || true
+ufw delete allow 21/tcp >/dev/null 2>&1 || true
+ufw delete allow 888/tcp >/dev/null 2>&1 || true
+ufw delete allow 39000:40000/tcp >/dev/null 2>&1 || true
+ufw reload
+
+if [ "$NEED_DOCKER_ASK" = true ]; then
+    echo -ne "\n${RED} ===> 是否安装 Docker 环境? [Y/n]： ${NC}"
+    read -r DOCKER_CONFIRM < /dev/tty
+    sleep 1s
     echo -e "\n${GREEN} 正在检查 Docker 安装条件... ${NC}"
     echo -e " 当前服务器位置信息：$SERVER_LOCATION ${NC}"
     
@@ -719,161 +772,73 @@ function install_docker() {
         ID=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
         VERSION_ID=$(lsb_release -rs)
     fi
-    
-    local SKIP_DOCKER_INSTALL=false
 
     # 版本号检查
     # Ubuntu 22.04 +
     if [[ "$ID" == "ubuntu" ]]; then
         if [[ "$VERSION_ID" < "22.00" ]]; then
-            echo -e "\n${RED} 错误: 当前为 Ubuntu $VERSION_ID，Docker 官方脚本仅支持 22.04+ "
-            echo -e " 请使用其他途径自行安装 Docker ${NC}"
-            SKIP_DOCKER_INSTALL=true
-            sleep 3s
+            echo -e "\n 当前系统为 Ubuntu $VERSION_ID，Docker 官方脚本仅支持 22.04+ "
+            echo -e " 将安装来自 apt 仓库的 Docker 版本 "
+            INSTALL_APT_DOCKER=true
+            sleep 1s
         fi
     # Debian 11 +
     elif [[ "$ID" == "debian" ]]; then
         local DEB_MAIN=$(echo "$VERSION_ID" | cut -d. -f1)
         if [[ "$DEB_MAIN" -lt 11 ]]; then
-            echo -e "\n${RED} 错误: 当前为 Debian $VERSION_ID，Docker 官方脚本仅支持 11+ "
-            echo -e " 请使用其他途径自行安装 Docker ${NC}"
-            SKIP_DOCKER_INSTALL=true
-            sleep 3s
+            echo -e "\n 当前系统为 Debian $VERSION_ID，Docker 官方脚本仅支持 11+ "
+            echo -e " 将安装来自 apt 仓库的 Docker 版本 "
+            INSTALL_APT_DOCKER=true
+            sleep 1s
         fi
+    else
+        echo -e "${GREEN} 由于系统信息未知，请自行安装 Docker ${NC}"
+        DOCKER_CONFIRM=No
     fi
-    sleep 1s
 
     # 如果不满足条件，直接跳过
-    if [ "$SKIP_DOCKER_INSTALL" = true ]; then
+    if [ "$DOCKER_" = No ]; then
         echo -e "\n${RED} 为了系统安全，已自动跳过 Docker 安装 ${NC}"
-        INSTALLED_DOCKER="否 (系统版本过低)"
-        sleep 3
-        # 直接退出
-        return 
+        INSTALLED_DOCKER=" 否 (系统版本过低) "
+        sleep 1s
     fi
 
-    echo -e "\n${GREEN} ===> 正在执行 Docker 安装... ${NC}"
-    # 下载脚本并重命名为 get-docker.sh 以方便清理
-    curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors --connect-timeout 20 https://get.docker.com -o get-docker.sh
-    case "$SERVER_LOCATION" in
-    "GLOBAL")
-        bash get-docker.sh
-        ;;
-
-    "CNMainLand")
-        bash get-docker.sh --mirror Aliyun
-        ;;
-
-    *)
-        echo " 未知的服务器位置: $SERVER_LOCATION "
-        bash get-docker.sh
-        ;;
-    esac
-}
-
-# ===> 开始面板安装逻辑
-
-dpkg --configure -a || true
-apt --fix-broken install -y || true
-sleep 1s
-
-case $PANEL_CHOICE in
-# 面板安装脚本将统一命名为 install_panel.sh 方便清理
-    [aA])
-    # https://www.bt.cn/new/download.html
-        echo -e "\n${GREEN} ===> 安装宝塔最新版... "
-        echo -e " 请先根据安装脚本提示就行操作... ${NC}"
-        wget --tries=5 --timeout=25 -O install_panel.sh https://download.bt.cn/install/install_panel.sh
-        bash install_panel.sh ssl251104
-        INSTALLED_PANEL=" 宝塔面板 - 最新版 "
-        NEED_DOCKER_ASK=true
-        NEED_SAVE_PANEL_INFO=true
-        ;;
-    [bB])
-    # https://www.bt.cn/new/download.html
-        echo -e "\n${GREEN} ===> 安装宝塔稳定版... "
-        echo -e " 请先根据安装脚本提示就行操作... ${NC}"
-        sleep 3s
-        wget --tries=5 --timeout=25 -O install_panel.sh https://download.bt.cn/install/installStable.sh
-        bash install_panel.sh ed8484bec
-        INSTALLED_PANEL=" 宝塔面板 - 稳定版 v10.0 "
-        NEED_DOCKER_ASK=true
-        NEED_SAVE_PANEL_INFO=true
-        ;;
-    [cC])
-    # https://www.bt.cn/new/download.html
-        echo -e "\n${GREEN} ===> 安装宝塔国际版 aaPanel ... "
-        echo -e " 请先根据安装脚本提示就行操作... ${NC}"
-        sleep 3s
-        wget --tries=5 --timeout=25 --no-check-certificate -O install_panel.sh https://www.aapanel.com/script/install_7.0_en.sh
-        bash install_panel.sh aapanel
-        INSTALLED_PANEL=" aaPanel v7.0.28 "
-        NEED_DOCKER_ASK=true
-        NEED_SAVE_PANEL_INFO=true
-        ;;
-    [dD])
-    # https://1panel.cn/#quickstart
-        echo -e "\n${GREEN} ===> 安装 1Panel ... "
-        echo -e " 请先根据安装脚本提示就行操作，并直接安装 Docker... ${NC}"
-        echo -e "${RED} 请注意，后续步骤中将不再单独安装 Docker ${NC}"
-        sleep 3s
-        wget --tries=5 --timeout=25 -O install_panel.sh https://resource.fit2cloud.com/1panel/package/v2/quick_start.sh
-        bash install_panel.sh
-        INSTALLED_PANEL=" 1Panel "
-        INSTALLED_DOCKER="是 (包含于 1Panel)"
-        NEED_DOCKER_ASK=false
-        NEED_SAVE_PANEL_INFO=false
-        
-        # 对于 1Panel，直接确认保存登录信息
-        echo -e "\n${GREEN} ===> Done. ${NC}"
-        wait_for_ok
-        sleep 3s
-        ;;
-    *)
-        echo -e "\n${GREEN} 已跳过面板安装 ${NC}"
-        NEED_DOCKER_ASK=true
-        ;;
-esac
-
-# ===> 宝塔/aaPanel 后续逻辑
-if [ "$NEED_SAVE_PANEL_INFO" = true ]; then
-    # 确认保存登录信息
-    echo -e "\n${GREEN} ===> Partly Done. (1/2) ${NC}"
-    wait_for_ok
-fi
-sleep 1s
-
-if [ "$NEED_DOCKER_ASK" = true ]; then
-    echo -ne "\n${RED} ===> 是否安装 Docker 环境? [Y/n]： ${NC}"
-    read -r DOCKER_CONFIRM < /dev/tty
-
-    apt --fix-broken install -y || true
-    sleep 1s
-
     if [[ "$DOCKER_CONFIRM" =~ ^[Yy]$ ]] || [[ -z "$DOCKER_CONFIRM" ]]; then
-        echo " 请稍后... "
-        # 等待1秒是因为偶尔会出现 apt/dpkg 锁的情况
-        sleep 3s
-        install_docker
+        check_and_fix_apt
+        sleep 1s
+        if [ "$INSTALL_APT_DOCKER" = true ]; then
+            echo -e "\n${GREEN} ===> 正在从 apt 源执行 Docker 安装... ${NC}"
+            apt install -y docker docker.io
+        else
+            echo -e "\n${GREEN} ===> 正在执行 Docker 安装... ${NC}"
+            # 重命名为 get-docker.sh 以方便清理
+            curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors --connect-timeout 20 https://get.docker.com -o get-docker.sh
+            case "$SERVER_LOCATION" in
+            "GLOBAL")
+                bash get-docker.sh
+                ;;
+            "CNMainLand")
+                bash get-docker.sh --mirror Aliyun
+                ;;
+            *)
+                echo " 未知的服务器位置 "
+                bash get-docker.sh
+                ;;
+            esac
+        fi
         sleep 1s
         echo -e "\n${GREEN} ===> Done. ${NC}"
-    
-        # 用 ufw 强制关掉不安全的端口
-        ufw delete allow 20/tcp >/dev/null 2>&1 || true
-        ufw delete allow 21/tcp >/dev/null 2>&1 || true
-        ufw delete allow 888/tcp >/dev/null 2>&1 || true
-        ufw reload
     fi
     sleep 3s
 fi
 
 # ===> 读取 Docker 版本信息
 if command -v docker &> /dev/null; then
-    # 提取 Docker 版本 (例如: 24.0.7)
+    # 提取 Docker 版本
     # docker --version 输出通常是 "Docker version 24.0.7, build ..."
     D_VER=$(docker --version | awk '{print $3}' | tr -d ',')
     
-    # 提取 Compose 版本 (例如: v2.21.0)
+    # 提取 Compose 版本
     # docker compose version 输出通常是 "Docker Compose version v2.21.0"
     C_VER=$(docker compose version 2>/dev/null | awk '{print $4}')
     
@@ -887,9 +852,8 @@ elif [[ "$INSTALLED_DOCKER" == "否"* ]]; then
     :
 else
     # 比如安装失败了
-    INSTALLED_DOCKER="${RED} 未检测到命令 (安装可能失败) ${NC}"
+    INSTALLED_DOCKER=" 未检测到 "
 fi
-
 clear
 
 # ===> 清理缓存
@@ -911,7 +875,6 @@ rm -f virt-sysprep-firstboot.log || true
 sleep 1s
 
 # ===> 采集基本系统信息，为总结做准备
-
 # CPU 型号 (提取第一行 model name)
 CPU_MODEL=$(grep -m1 'model name' /proc/cpuinfo | awk -F: '{print $2}' | sed 's/^[ \t]*//')
 # 内存使用 (已用/总计)
@@ -927,11 +890,10 @@ if [ -f /etc/os-release ]; then
 else
     SYSTEM_INFO="Unknown Linux"
 fi
-# 内核版本
-KERNEL_VER=$(uname -r)
-# 公网 IP 
-PUBLIC_IP=$(curl -s --max-time 3 https://api.ip.sb/ip -A Mozilla || echo "获取失败")
-
+# 公网 IPv4
+PUBLIC_IPV4=$(curl -4 -s --max-time 3 https://api.ip.sb/ip -A Mozilla || echo " 没有公网 IPv4 ")
+# 公网 IPv6
+PUBLIC_IPV6=$(curl -6 -s --max-time 3 https://api.ip.sb/ip -A Mozilla || echo " 没有公网 IPv6 ")
 sleep 1s
 
 # 下载后续文件
@@ -959,20 +921,18 @@ echo -e "\n${GREEN} ============================================= ${NC}"
 echo -e "${GREEN}                系统初始化摘要 ${NC}"
 echo -e "${GREEN} ============================================= ${NC}"
 sleep 1s
-echo -e " [1/$TOTAL_STEPS] 时区设置      : ${GREEN} Asia/Shanghai √ ${NC}"
-echo -e " [2/$TOTAL_STEPS] TCP BBR       : ${GREEN} 已启用 √ ${NC}"
-echo -e " [3/$TOTAL_STEPS] Swap 交换分区 : ${GREEN} 已配置 √ ${NC}"
-echo -e " [4/$TOTAL_STEPS] APT 源与更新  : ${GREEN} 完成 √ ${NC}"
-echo -e " [5/$TOTAL_STEPS] ufw 防火墙    : ${GREEN} 就绪 √ ${NC}"
-echo -e " [6/$TOTAL_STEPS] 安全防护组件  : ${GREEN} 已安装 $INSTALLED_SECURITY_TOOL √ ${NC}"
-echo -e " [7/$TOTAL_STEPS] 内核检查      : ${GREEN} 完成 √ ${NC}"
-echo -e " [8/$TOTAL_STEPS] Snap 处理     : ${GREEN} 已清理 √ ${NC}"
-echo -e " [9/$TOTAL_STEPS] 磁盘空间优化  : ${GREEN} 完成 √ ${NC}"
-
+echo -e " - 时区设置      : ${GREEN} Asia/Shanghai √ ${NC}"
+echo -e " - TCP BBR       : ${GREEN} 已启用 √ ${NC}"
+echo -e " - Swap 交换分区 : ${GREEN} 已配置 √ ${NC}"
+echo -e " - APT 源与更新  : ${GREEN} 完成 √ ${NC}"
+echo -e " - ufw 防火墙    : ${GREEN} 就绪 √ ${NC}"
+echo -e " - 安全防护组件  : ${GREEN} 已安装 $INSTALLED_SECURITY_TOOL √ ${NC}"
+echo -e " - 内核检查      : ${GREEN} 完成 √ ${NC}"
+echo -e " - 磁盘空间优化  : ${GREEN} 完成 √ ${NC}"
 # 增强组件相关信息
-echo -e " [10/$TOTAL_STEPS] 增强组件信息： "
-echo -e " 面板环境     : ${GREEN} $INSTALLED_PANEL ${NC}"
-echo -e " Docker 环境  : ${GREEN} $INSTALLED_DOCKER ${NC}"
+echo -e "${GREEN} 增强组件信息： ${NC}"
+echo -e " - 面板环境      : ${GREEN} $INSTALLED_PANEL ${NC}"
+echo -e " - Docker 环境   : ${GREEN} $INSTALLED_DOCKER ${NC}"
 
 echo " Please wait... "
 sleep 3s
@@ -986,8 +946,7 @@ echo -e "${GREEN} 内存占用 ${NC}     : ${MEM_USAGE} "
 echo -e "${GREEN} Swap 占用 ${NC}    : ${SWAP_USAGE} "
 echo -e "${GREEN} 磁盘空间占用 ${NC} : ${DISK_USAGE} "
 echo -e "${GREEN} 系统信息 ${NC}     : ${SYSTEM_INFO} "
-echo -e "${GREEN} 内核版本 ${NC}     : ${KERNEL_VER} "
-echo -e "${GREEN} 公网 IP 信息 ${NC} : ${PUBLIC_IP} "
+echo -e "${GREEN} 公网 IP 信息 ${NC} : ${PUBLIC_IPV4} + ${PUBLIC_IPV6} "
 
 echo " Please wait... "
 sleep 3s
@@ -1020,14 +979,14 @@ if [ -f "$0" ]; then
     rm -f "$0"
     echo " init.sh 脚本清理已完成 "
 fi
+sleep 1s
 
 echo -e "\n${GREEN} =============================================${NC}"
 echo -e "\n${RED} 由于更新了内核，即将重启系统 "
 sleep 3s
 echo -e "\n${GREEN} ===> 正在重启... SSH 将断开连接 ${NC}"
 echo -e "${RED} 涉及内核更新后的重启可能需要更多时间 ${NC}"
-echo -e "${GREEN} 可以在 VNC 等控制台查看详细信息 \n${NC}"
-
+echo -e "${GREEN} 可以在 VNC 等控制台查看详细信息 ${NC}"
 sleep 1s
 
 echo -e "\n  ____________________________ "
@@ -1040,5 +999,5 @@ reboot
 
 # GitHub: @yhxpie
 # https://github.com/yhxpie/server-init
-# Version 1.0.5
-# Last Update: 2026-1-4
+# Version 1.1.0
+# Last Update: 2026-1-19

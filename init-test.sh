@@ -127,6 +127,7 @@ official_install_docker || apt install -y docker docker.io
 
 # 清理
 apt autoremove -y
+apt clean
 
 # ===> 采集基本系统信息
 MEM_USAGE=$(free -h | awk '/Mem:/ {print $3 "/" $2}')
@@ -149,5 +150,5 @@ echo -e " | GitHub: yhxpie/server-init | \n"
 
 # GitHub: @yhxpie
 # https://github.com/yhxpie/server-init
-# Version 1.0.6
+# Version 1.0
 # Last Update: 2026-1-6

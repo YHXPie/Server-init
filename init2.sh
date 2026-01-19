@@ -58,33 +58,10 @@ clear
 TOTAL_STEPS=3
 
 # ===> 1. 配置服务器 SSH 密钥登录
-
-# ===> 1-1. SSH：清理 SSH Drop-in 干扰
 echo -e "${GREEN} ===> [1/$TOTAL_STEPS] 开始配置 SSH 密钥登录... ${NC}"
 sleep 1s
 
-# 这一步是为了防止 /etc/ssh/sshd_config.d/ 下的配置覆盖默认 SSH 配置
-# OpenSSH 的配置文件 (/etc/ssh/sshd_config) 开头部分通常有一行：
-# 'Include /etc/ssh/sshd_config.d/*.conf'
-# 根据 OpenSSH 的 “First Match Wins” 原则
-# 系统会先读取 sshd_config.d/50-cloud-init.conf 配置项
-# 其中可能写着：'PasswordAuthentication yes'
-# 那么这时候系统就会直接执行这一政策
-# 随机忽略在主配置文件文件下面写的 'PasswordAuthentication no'
-# 要在自动化脚本里彻底解决这个问题，最暴力且有效的方法是：
-# 直接清空该目录下的干扰文件，或者直接注释掉 Include 指令
-echo -e "\n${GREEN} 正在清理 SSH Drop-in 配置文件... ${NC}"
-if [ -d "/etc/ssh/sshd_config.d" ]; then
-    # 创建备份以防万一
-    cp -r /etc/ssh/sshd_config.d /etc/ssh/sshd_config.d.bak
-    
-    # 删除目录下的所有 .conf 文件
-    rm -f /etc/ssh/sshd_config.d/*.conf
-    echo -e "\n${GREEN} 已删除 /etc/ssh/sshd_config.d/ 下的配置文件 ${NC}"
-fi
-sleep 1s
-
-# ===> 1-2. 交互式获取公钥
+# ===> 1-1. 交互式获取公钥
 while true; do
     echo -e "\n${GREEN} ===> 请粘贴您的 SSH 公钥 (ssh-rsa / ssh-ed25519 AAAA...):  ${NC}"
     read -r PUB_KEY < /dev/tty
@@ -107,27 +84,52 @@ while true; do
             continue
         fi
     fi
+
     break
 done
 
 echo -e "\n${GREEN} 已获取公钥，准备配置... ${NC}"
 sleep 1s
 
+# ===> 1-2. SSH：清理 SSH Drop-in 干扰
+# 这一步是为了防止 /etc/ssh/sshd_config.d/ 下的配置覆盖默认 SSH 配置
+# OpenSSH 的配置文件 (/etc/ssh/sshd_config) 开头部分通常有一行：
+# 'Include /etc/ssh/sshd_config.d/*.conf'
+# 根据 OpenSSH 的 “First Match Wins” 原则
+# 系统会先读取 sshd_config.d/50-cloud-init.conf 配置项
+# 其中可能写着：'PasswordAuthentication yes'
+# 那么这时候系统就会直接执行这一政策
+# 随机忽略在主配置文件文件下面写的 'PasswordAuthentication no'
+# 要在自动化脚本里彻底解决这个问题，最暴力且有效的方法是：
+# 直接清空该目录下的干扰文件，或者直接注释掉 Include 指令
+echo -e "\n${GREEN} 正在清理 SSH Drop-in 配置文件... ${NC}"
+if [ -d "/etc/ssh/sshd_config.d" ]; then
+    # 创建备份以防万一
+    cp -r /etc/ssh/sshd_config.d /etc/ssh/sshd_config.d.bak
+    # 删除目录下的所有 .conf 文件
+    rm -f /etc/ssh/sshd_config.d/*.conf
+    echo -e "\n${GREEN} 已删除 /etc/ssh/sshd_config.d/ 下的配置文件 ${NC}"
+fi
+sleep 1s
+
 # ===> 1-3. 变量定义
 # 填入需要创建的用户名
-echo -e "\n${RED} 用户名仅允许只允许字母、数字、下划线、短横线，且以字母开头 ${NC}"
-echo -ne "\n${GREEN} ===> 请输入需要创建的用户名： ${NC}"
-read -r USERNAME_INPUT < /dev/tty
-USERNAME="$USERNAME_INPUT" 
-sleep 1s
+while true; do
+    echo -e "\n${RED} 用户名仅允许只允许字母、数字、下划线、短横线，且以字母开头 ${NC}"
+    echo -ne "\n${GREEN} ===> 请输入需要创建的用户名： ${NC}"
+    read -r USERNAME_INPUT < /dev/tty
+    USERNAME="$USERNAME_INPUT" 
+    sleep 1s
 
 # 简单合法性检查 
 # 只允许字母、数字、下划线、短横线，且以字母开头
-if [[ ! "$USERNAME" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
-    echo -ne "${RED} 错误: 用户名不合法 (只能包含小写字母、数字、_ -，且以字母开头) ${NC}"
-    exit 1
-fi
+    if [[ ! "$USERNAME" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
+        echo -ne "${RED} 错误: 用户名不合法 (只能包含小写字母、数字、_ -，且以字母开头) ${NC}"
+        continue
+    fi
 
+    break
+done
 # ===> 1-4. 创建用户
 if id "$USERNAME" &>/dev/null; then
     echo -e "\n${GREEN} 用户 $USERNAME 已存在，跳过创建 ${NC}"
@@ -214,19 +216,17 @@ sshd -t # 检查语法
 systemctl restart ssh || systemctl restart sshd
 sleep 1s
 
-echo -e "\n${GREEN} ===> 用户配置完成 <=== ${NC}"
+echo -e "\n${GREEN} ===> 用户配置完成 ${NC}"
 echo -e " 用户: ${GREEN} $USERNAME ${NC}"
 echo -e " 公钥: ${GREEN} $PUB_KEY ${NC}"
 echo -e "\n${RED} 请新建一个终端用于测试登录： ${NC}"
 echo -e "${RED} 1. 能否使用密钥登录对应用户? ${NC}"
-echo -e "${GREEN}    - 正常情况：可正常登录而不是被拒绝 ${NC}"
-echo -e "${RED} 2. 登陆后使用 'sudo -i' 时是否还需要输入密码? ${NC}"
-echo -e "${GREEN}    - 正常情况：使用 'sudo -i' 可以直接以 root 运行 ${NC}"
-
+echo -e "${GREEN}    - 正常情况：可正常以 $USERNAME 身份登录而不是被拒绝 ${NC}"
+echo -e "${RED} 2. 登录后使用 'sudo -i' 时是否还需要输入密码? ${NC}"
+echo -e "${GREEN}    - 正常情况：使用 'sudo -i' 可以直接以 root 身份运行 Bash ${NC}"
 sleep 1s
-
 echo -ne "\n${RED} ===> 如果测试结果没有问题，请输入 'ok': ${NC}"
-# 逻辑判断：只有在输入 ok 后才继续执行
+# 只有在输入 ok 后才继续执行
 while true; do
     read -r SSH_TEST_RESULT < /dev/tty
     if [[ "$SSH_TEST_RESULT" == "ok" ]] || [[ "$SSH_TEST_RESULT" == "OK" ]]; then
@@ -234,6 +234,7 @@ while true; do
         break
     else
         echo -ne "${RED} ===> 输入无效，请输入 'ok'： ${NC}"
+        continue
     fi
 done
 
@@ -242,7 +243,7 @@ sleep 3s
 clear
 
 # ===> 2. 清理旧版本系统旧内核
-echo -e "${GREEN} [1/$TOTAL_STEPS] 开始配置 SSH 密钥登录... DONE √ "
+echo -e "${GREEN} [1/$TOTAL_STEPS] 配置 SSH 密钥登录... DONE √ "
 echo -e " ===> [2/$TOTAL_STEPS] 正在清理旧内核与无用依赖 ... ${NC}"
 
 apt --fix-broken install -y || true
@@ -267,8 +268,7 @@ OLD_IMAGES=$(dpkg-query -W -f='${db:Status-Status} ${Package}\n' | grep '^instal
 
 if [ -n "$OLD_IMAGES" ]; then
     echo -e "\n${GREEN} 正在清理旧版本 Linux 内核： ${NC}"
-    echo -e "${RED} $OLD_IMAGES ${NC}"
-    echo
+    echo -e "${RED} $OLD_IMAGES ${NC}\N"
     
     # 清除旧内核
     echo "$OLD_IMAGES" | xargs -r apt purge -y
@@ -280,7 +280,6 @@ if [ -n "$OLD_IMAGES" ]; then
     apt autoremove -y --purge
     echo -e "\n${GREEN} Partly Done. (2/3) ${NC}"
     sleep 1s
-    
     update-grub
     sleep 1s
 
@@ -290,16 +289,12 @@ if [ -n "$OLD_IMAGES" ]; then
 else
     echo -e "\n${GREEN} 未发现旧内核镜像 ${NC}"
     sleep 1s
-
-    # 同样进行一次清理
-    apt autoremove -y --purge
-    sleep 1s
 fi
 clear
 
 # ===> 3. 最终清理
-echo -e "${GREEN} [1/$TOTAL_STEPS] 开始配置 SSH 密钥登录... DONE √ "
-echo -e " [2/$TOTAL_STEPS] 正在清理旧内核与无用依赖 ... DONE √ "
+echo -e "${GREEN} [1/$TOTAL_STEPS] 配置 SSH 密钥登录... DONE √ "
+echo -e " [2/$TOTAL_STEPS] 清理旧内核与无用依赖 ... DONE √ "
 echo -e " ===> [3/$TOTAL_STEPS] 正在执行最终清理 ... ${NC}"
 
 # 使用 sed 移除 .bashrc 里提示标记
@@ -308,21 +303,55 @@ sed -i '/# \[Server-init\] Stage 2 Reminder/,/fi/d' /root/.bashrc
 # 删除多余脚本
 rm init-clean.sh SSH_GUIDE.md init.sh || true
 
-# apt 缓存清理
+# apt 清理
+apt update
+apt autoremove --purge -y
 apt clean
 echo -e "\n${GREEN} ===> Done. ${NC}"
-
+sleep 3s
 clear
 
-echo -e "\n${GREEN} =============================================${NC}"
-echo -e "${GREEN}              系统初始化全部完成 ${NC}"
-echo -e "${GREEN} =============================================${NC}"
+# ===> 采集基本系统信息，为总结做准备
+# CPU 型号 (提取第一行 model name)
+CPU_MODEL=$(grep -m1 'model name' /proc/cpuinfo | awk -F: '{print $2}' | sed 's/^[ \t]*//')
+# 内存使用 (已用/总计)
+MEM_USAGE=$(free -h | awk '/Mem:/ {print $3 "/" $2}')
+# Swap 使用 (已用/总计)
+SWAP_USAGE=$(free -h | awk '/Swap:/ {print $3 "/" $2}')
+# 磁盘使用 (根目录 / 的占用)
+DISK_USAGE=$(df -h / | awk 'NR==2 {print $3 "/" $2 " (" $5 ")"}')
+# 系统信息
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    SYSTEM_INFO="$PRETTY_NAME"
+else
+    SYSTEM_INFO="Unknown Linux"
+fi
+# 内核版本
+KERNEL_VER=$(uname -r)
+# 公网 IPv4
+PUBLIC_IPV4=$(curl -4 -s --max-time 3 https://api.ip.sb/ip -A Mozilla || echo " 没有公网 IPv4 ")
+# 公网 IPv6
+PUBLIC_IPV6=$(curl -6 -s --max-time 3 https://api.ip.sb/ip -A Mozilla || echo " 没有公网 IPv6 ")
 sleep 1s
 
-# 再次展示登录用户信息
-echo -e "\n${GREEN} ===> 用户配置信息 <=== ${NC}"
-echo -e " 用户: ${GREEN} $USERNAME ${NC}"
-echo -e " 公钥: ${GREEN} $PUB_KEY ${NC}\n"
+# ===> 完成总结
+echo -e "\n${GREEN} ============================================= ${NC}"
+echo -e "${GREEN}               系统状态信息检查 ${NC}"
+echo -e "${GREEN} ============================================= ${NC}"
+sleep 1s
+echo -e "${GREEN} CPU 信息 ${NC}     : ${CPU_MODEL} "
+echo -e "${GREEN} 内存占用 ${NC}     : ${MEM_USAGE} "
+echo -e "${GREEN} Swap 占用 ${NC}    : ${SWAP_USAGE} "
+echo -e "${GREEN} 磁盘空间占用 ${NC} : ${DISK_USAGE} "
+echo -e "${GREEN} 系统信息 ${NC}     : ${SYSTEM_INFO} "
+echo -e "${GREEN} 内核版本 ${NC}     : ${KERNEL_VER} "
+echo -e "${GREEN} 公网 IP 信息 ${NC} : ${PUBLIC_IPV4} + ${PUBLIC_IPV6} "
+echo -e "\n${GREEN} 用户登录配置信息   ：${NC}"
+echo -e " - 用户: ${GREEN} $USERNAME ${NC}"
+echo -e " - 公钥: ${GREEN} $PUB_KEY ${NC}"
+sleep 1s
+echo -e "\n${GREEN} 系统初始化全部完成 ${NC}"
 sleep 3s
 
 # 自行清理
@@ -330,7 +359,6 @@ if [ -f "$0" ]; then
     rm -f "$0"
     echo " init2.sh 脚本清理已完成 "
 fi
-
 sleep 1s
 
 echo -e "\n  ____________________________ "
@@ -340,5 +368,5 @@ echo -e " | GitHub: yhxpie/server-init | \n"
 
 # GitHub: @yhxpie
 # https://github.com/yhxpie/server-init
-# Version 1.0.4
-# Last Update: 2025-12-31
+# Version 1.1.0
+# Last Update: 2026-1-19

@@ -43,7 +43,6 @@ apt autoremove -y --purge
 apt clean
 echo -e "\n${GREEN} ===> Done. (/3) ${NC}"
 sleep 3s
-
 clear
 
 echo -e "\n${GREEN} =============================================${NC}"
@@ -56,7 +55,6 @@ if [ -f "$0" ]; then
     rm -f "$0"
     echo " init-clean.sh 脚本清理已完成 "
 fi
-
 sleep 1s
 
 echo -e "\n  ____________________________ "
@@ -66,5 +64,5 @@ echo -e " | GitHub: yhxpie/server-init | \n"
 
 # GitHub: @yhxpie
 # https://github.com/yhxpie/server-init
-# Version 1.0.4
+# Version 1
 # Last Update: 2025-12-31

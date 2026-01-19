@@ -52,7 +52,7 @@ curl -O https://yhxpie-server-init.netlify.app/init.sh || wget -O ${_##*/} $_ &&
 
 对于完全测试环境，可以使用：
 ```bash
-curl -O https://yhxpie-server-init.netlify.app/init-test.sh || wget -O ${_##*/} $_ && bash init.sh
+curl -O https://yhxpie-server-init.netlify.app/init-test.sh && bash init.sh
 ```
 
 ### 第二步：配置用户与清理
@@ -70,13 +70,13 @@ sudo bash init2.sh
 sudo bash init-clean.sh
 ```
 
-`init-clean.sh` 仅删除控制台消息并删除所有残余内容，如果是仅测试环境，也可以不执行。
+`init-clean.sh` 仅删除控制台消息并删除所有残余内容，如果是仅测试环境，也可以不执行
 
 - - -
 
 ## 功能特性
 
-分为 Stage 1 & Stage 2，旨在实现“开箱即用”的最佳实践配置。
+分为 Stage 1 & Stage 2，旨在实现“开箱即用”的最佳实践配置
 
 ### Stage 1: `init.sh`：服务器基础配置
 
@@ -90,7 +90,7 @@ sudo bash init-clean.sh
   - 将更新源从 HTTP 切换为 HTTPS
 - **安全防护**：
   - 配置 UFW 防火墙
-  - 提供 **Fail2ban** 或 **SSHGuard** 防暴力破解组件
+  - 提供 Fail2ban 或 SSHGuard 防暴力安全组件
 - **内核升级**：
   - 自动更新系统内核
   - Ubuntu 支持更新至 HWE 硬件增强堆栈内核
@@ -118,17 +118,20 @@ sudo bash init-clean.sh
 ### Stage 2: `init2.sh`：进阶配置
 
 > [!WARNING]
-> `init2.sh` 或者 `init-clean.sh` 请务必在系统重启后执行
+> `init2.sh` 或 `init-clean.sh` 请务必在系统重启后执行
 
 - **SSH 安全加固**：
   - 强制清理 SSH Drop-in 干扰配置
-  - 配置 SSH 密钥登录，**禁用密码登录**。
-  - 禁用 Root 密码登录，同样仅允许密钥
+  - 配置 SSH 密钥登录，**禁用密码登录**
+  - 禁用 Root 密码登录，仅允许密钥登录
 - **用户管理**：
-  -  创建 sudo 免密用户并同步公钥
+  - 创建 sudo 免密用户并同步公钥
 - **深度清理**：
   - 精准识别并移除旧版本内核
   - 移除无用依赖与残留配置文件
+
+> [!IMPORTANT]
+> 此步骤中设计的用户可以通过 VNC 进行密码登录
 
 ### `init-test.sh`：测试环境快速配置
 
@@ -141,7 +144,7 @@ sudo bash init-clean.sh
 - **apt 源配置**：
   - 自动检测服务器地区，大陆地区自动切换至 NJU 镜像源
 - **环境部署**：
-  - 安装 Docker
+  - 直接安装 Docker
   - 安装最新版宝塔面板 (可选)
 
 ---
@@ -157,16 +160,16 @@ sudo bash init-clean.sh
 
 ### Ubuntu <img width="16" height="16" src="https://documentation.ubuntu.com/server/_static/favicon.png" /> 
 
-| OS Version | Status | init.sh | init2.sh |
+| OS Version | Status | init.sh | init2.sh | init-test.sh |
 | :----- | :-----: | :-----: | :-----: |
-| 25.10 (Questing Quokka) | Verifed | ✅ | ✅ |
-| 25.04 (Plucky Puffin) | Verifed | ✅ | ✅ |
-| 24.04 LTS (Noble Numbat) | Verifed | ✅ | ✅ |
-| 22.04 LTS (Jammy Jellyfish) | Verifed | ✅ | ✅ |
-| 20.04 LTS (Focal Fossa) | ❌ | ⚠️ Docker |  |
-| 18.04 LTS (Bionic Beaver) | ❌ | ⚠️ Docker |  |
-| 16.04 LTS (Xenial Xerus) | ❌ | ⚠️ Docker |  |
-| 14.04 LTS (Trusty Tahr) | ❌ | ⚠️ Docker |  |
+| 25.10 (Questing Quokka) | Verifed | ✅ | ✅ | ✅ |
+| 25.04 (Plucky Puffin) | Verifed | ✅ | ✅ | ✅ |
+| 24.04 LTS (Noble Numbat) | Verifed | ✅ | ✅ | ✅ |
+| 22.04 LTS (Jammy Jellyfish) | Verifed | ✅ | ✅ | ✅ |
+| 20.04 LTS (Focal Fossa) | ⚠️ | Docker 来自 apt 仓库 |  | Docker 来自 apt 仓库 |
+| 18.04 LTS (Bionic Beaver) | ⚠️ | Docker 来自 apt 仓库 |  | Docker 来自 apt 仓库 |
+| 16.04 LTS (Xenial Xerus) | ⚠️ | Docker 来自 apt 仓库 |  | Docker 来自 apt 仓库 |
+| 14.04 LTS (Trusty Tahr) | ⚠️ | Docker 来自 apt 仓库 |  | Docker 来自 apt 仓库 |
 
 ### Debian <img width="16" height="16" src="https://www.debian.org/favicon.ico" />
 
@@ -175,7 +178,9 @@ sudo bash init-clean.sh
 | 13 Testing (Trixie) | Verifed | ✅ | ✅ |
 | 12 (Bookworm) | Verifed | ✅ | ✅ |
 | 11 (Bullseye) | Verifed | ✅ | ✅ |
-| 10 (Buster) |  |  |  |
+| 10 (Buster) | ⚠️ | Docker 来自 apt 仓库 |  | Docker 来自 apt 仓库 |
+
+❌ 旧版本系统的 Docker 安装自系统对应的 apt 仓库，其中无 Docker Compose
 
 ## 免责声明
 
