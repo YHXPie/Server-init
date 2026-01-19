@@ -161,24 +161,24 @@ sudo bash init-clean.sh
 ### Ubuntu <img width="16" height="16" src="https://documentation.ubuntu.com/server/_static/favicon.png" /> 
 
 | OS Version | Status | init.sh | init2.sh | init-test.sh |
-| :----- | :-----: | :-----: | :-----: |
+| :----- | :-----: | :-----: | :-----: | :-----: |
 | 25.10 (Questing Quokka) | Verifed | ✅ | ✅ | ✅ |
 | 25.04 (Plucky Puffin) | Verifed | ✅ | ✅ | ✅ |
 | 24.04 LTS (Noble Numbat) | Verifed | ✅ | ✅ | ✅ |
 | 22.04 LTS (Jammy Jellyfish) | Verifed | ✅ | ✅ | ✅ |
-| 20.04 LTS (Focal Fossa) | ⚠️ | Docker 来自 apt 仓库 |  | Docker 来自 apt 仓库 |
-| 18.04 LTS (Bionic Beaver) | ⚠️ | Docker 来自 apt 仓库 |  | Docker 来自 apt 仓库 |
-| 16.04 LTS (Xenial Xerus) | ⚠️ | Docker 来自 apt 仓库 |  | Docker 来自 apt 仓库 |
-| 14.04 LTS (Trusty Tahr) | ⚠️ | Docker 来自 apt 仓库 |  | Docker 来自 apt 仓库 |
+| 20.04 LTS (Focal Fossa) | ⚠️ | Docker 来自 apt 仓库 |  |  ⚠️ Docker  |
+| 18.04 LTS (Bionic Beaver) | ⚠️ | Docker 来自 apt 仓库 |  | ⚠️ Docker  |
+| 16.04 LTS (Xenial Xerus) | ⚠️ | Docker 来自 apt 仓库 |  | ⚠️ Docker  |
+| 14.04 LTS (Trusty Tahr) | ⚠️ | Docker 来自 apt 仓库 |  | ⚠️ Docker |
 
 ### Debian <img width="16" height="16" src="https://www.debian.org/favicon.ico" />
 
-| OS Version | Status | init.sh | init2.sh |
-| :----- | :-----: | :-----: | :-----: |
+| OS Version | Status | init.sh | init2.sh | init-test.sh |
+| :----- | :-----: | :-----: | :-----: | :-----: |
 | 13 Testing (Trixie) | Verifed | ✅ | ✅ |
 | 12 (Bookworm) | Verifed | ✅ | ✅ |
 | 11 (Bullseye) | Verifed | ✅ | ✅ |
-| 10 (Buster) | ⚠️ | Docker 来自 apt 仓库 |  | Docker 来自 apt 仓库 |
+| 10 (Buster) | ⚠️ | Docker 来自 apt 仓库 |  | ⚠️ Docker  |
 
 ❌ 旧版本系统的 Docker 安装自系统对应的 apt 仓库，其中无 Docker Compose
 
