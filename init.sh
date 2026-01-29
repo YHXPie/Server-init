@@ -134,7 +134,7 @@ timedatectl set-ntp true || true
 systemctl restart systemd-timesyncd.service 2>/dev/null || TIME_SYNC_AGAIN=yes
 sleep 1s
 
-sudo timedatectl set-local-rtc 0 || true
+timedatectl set-local-rtc 0 || true
 sleep 1s
 
 # 显示时间
@@ -440,11 +440,11 @@ sleep 1s
 
 # 有必要则使用 systemd-timesyncd 再次同步时间
 if [ "$TIME_SYNC_AGAIN" = "yes" ]; then
-    sudo systemctl enable --now systemd-timesyncd
+    systemctl enable --now systemd-timesyncd
     sleep 1s
-    sudo timedatectl set-ntp on
+    timedatectl set-ntp on
     sleep 1s
-    sudo timedatectl set-local-rtc 0 || true
+    timedatectl set-local-rtc 0 || true
     timedatectl
     echo -e " 当前时间${NC}: $(date) "
 fi
@@ -503,7 +503,7 @@ echo -e " [6/$TOTAL_STEPS] 配置 ufw 防火墙... DONE √ "
 echo -e " ===> [7/$TOTAL_STEPS] 配置安全组件... ${NC}"
 sleep 1s
 echo -e "\n${RED} 选择要安装的安全防护工具： \n${NC}"
-echo -e "${GREEN} 1) ${NC} Fail2ban (${GREEN} 默认 ${NC} - 功能强大但负载占用稍高) "
+echo -e "${GREEN} 1) ${NC} Fail2ban (${GREEN} 默认 ${NC}- 功能强大但负载占用稍高) "
 echo -e "${GREEN} 2) ${NC} SSHGuard (更加轻量，资源占用更低) "
 echo -ne "\n${RED} 请输入选项 [1/2] : ${NC}"
 read -r SECURITY_CHOICE < /dev/tty
@@ -601,7 +601,7 @@ if [[ "$KERNEL_VERSION" == *"azure"* ]] || \
    [[ "$KERNEL_VERSION" == *"uek"* ]] || \
    [[ "$KERNEL_VERSION" == *"oracle"* ]]; then
     echo -e "\n${GREEN} 检测到专用内核，已跳过安装步骤 ${NC}"
-    sleep 1s
+    sleep 3s
 else
     # 仅在 Ubuntu 下尝试安装 HWE
     if grep -q "Ubuntu" /etc/issue; then
@@ -665,10 +665,10 @@ sleep 1s
 echo -e "${GREEN} 服务器面板/ Docker 环境安装 ${NC}"
 
 echo -e "\n${RED} 请选择要安装的面板： \n${NC}"
-echo -e "${GREEN} A) 宝塔面板${NC} - 最新版 (v11.5.0) "
+echo -e "${GREEN} A) 宝塔面板${NC} - 最新版 (v11.5) "
 echo -e "${GREEN} B) 宝塔面板${NC} - 稳定版 (v10.0) "
-echo -e "${GREEN} C) aaPanel${NC} - 宝塔国际版 (v7.0.39) (English Only) "
-echo -e "${GREEN} D) 1Panel${NC} - 容器化面板 (自带 Docker) "
+echo -e "${GREEN} C) aaPanel${NC} - 宝塔国际版 (v7.0.30) (English Only) "
+echo -e "${GREEN} D) 1Panel${NC} - 容器化面板 (v2) (自带 Docker) "
 echo -e "${GREEN} E)${NC} 跳过面板安装步骤 "
 echo -ne "\n${RED} 请输入选项 [A-E]: ${NC}"
 read -r PANEL_CHOICE < /dev/tty
@@ -756,13 +756,12 @@ ufw delete allow 21/tcp >/dev/null 2>&1 || true
 ufw delete allow 888/tcp >/dev/null 2>&1 || true
 ufw delete allow 39000:40000/tcp >/dev/null 2>&1 || true
 ufw reload
+sleep 1s
 
 if [ "$NEED_DOCKER_ASK" = true ]; then
     echo -ne "\n${RED} ===> 是否安装 Docker 环境? [Y/n]： ${NC}"
     read -r DOCKER_CONFIRM < /dev/tty
     sleep 1s
-    echo -e "\n${GREEN} 正在检查 Docker 安装条件... ${NC}"
-    echo -e " 当前服务器位置信息：$SERVER_LOCATION ${NC}"
     
     # 读取系统信息
     if [ -f /etc/os-release ]; then
@@ -784,7 +783,7 @@ if [ "$NEED_DOCKER_ASK" = true ]; then
         fi
     # Debian 11 +
     elif [[ "$ID" == "debian" ]]; then
-        local DEB_MAIN=$(echo "$VERSION_ID" | cut -d. -f1)
+        DEB_MAIN=$(echo "$VERSION_ID" | cut -d. -f1)
         if [[ "$DEB_MAIN" -lt 11 ]]; then
             echo -e "\n 当前系统为 Debian $VERSION_ID，Docker 官方脚本仅支持 11+ "
             echo -e " 将安装来自 apt 仓库的 Docker 版本 "
@@ -804,6 +803,8 @@ if [ "$NEED_DOCKER_ASK" = true ]; then
     fi
 
     if [[ "$DOCKER_CONFIRM" =~ ^[Yy]$ ]] || [[ -z "$DOCKER_CONFIRM" ]]; then
+        echo -e "\n${GREEN} 正在检查 Docker 安装条件... ${NC}"
+        echo -e " 当前服务器位置信息：$SERVER_LOCATION ${NC}"
         check_and_fix_apt
         sleep 1s
         if [ "$INSTALL_APT_DOCKER" = true ]; then
