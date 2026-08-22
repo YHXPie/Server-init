@@ -2,7 +2,7 @@
 
 # init2.sh
 
-# Copyright (C) 2025 StreamingHX/yhxpie
+# Copyright (C) 2026 StreamingHX/yhxpie
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,8 +50,8 @@ echo -e "\n${GREEN} 1. 配置服务器 SSH 密钥登录 "
 echo -e " 2. 清理旧版本系统内核 "
 echo -e " 3. 执行最终清理 ${NC}"
 echo -e "\n ${RED} 执行时建议时刻保持状态监控 ${NC}"
-echo -e "\n 等待 5 秒... "
-sleep 5s
+echo -e "\n 等待 3 秒... "
+sleep 3s
 clear
 
 # ===> 定义全局步骤数量
@@ -61,7 +61,7 @@ TOTAL_STEPS=3
 echo -e "${GREEN} ===> [1/$TOTAL_STEPS] 开始配置 SSH 密钥登录... ${NC}"
 sleep 1s
 
-# ===> 1-1. 交互式获取公钥
+# ===> 1-1. 获取公钥
 while true; do
     echo -e "\n${GREEN} ===> 请粘贴您的 SSH 公钥 (ssh-rsa / ssh-ed25519 AAAA...):  ${NC}"
     read -r PUB_KEY < /dev/tty
@@ -73,9 +73,9 @@ while true; do
         continue
     fi
 
-    # 格式验证：如果看起来不像标准 SSH 公钥
+    # 格式验证
     if [[ "$PUB_KEY" != ssh-* ]]; then
-        echo -e "\n${RED} 警告: 输入的内容看起来不像标准的 SSH 公钥 (不以 ssh- 开头) ${NC}"
+        echo -e "\n${RED} 输入的内容似乎非标准 SSH 公钥 ${NC}"
         echo -en "\n${GREEN} 是否继续? [y/N]: ${NC}"
         read -r CONFIRM < /dev/tty
 
@@ -102,23 +102,19 @@ sleep 1s
 # 随机忽略在主配置文件文件下面写的 'PasswordAuthentication no'
 # 要在自动化脚本里彻底解决这个问题，最暴力且有效的方法是：
 # 直接清空该目录下的干扰文件，或者直接注释掉 Include 指令
-echo -e "\n${GREEN} 正在清理 SSH Drop-in 配置文件... ${NC}"
 if [ -d "/etc/ssh/sshd_config.d" ]; then
     # 创建备份以防万一
     cp -r /etc/ssh/sshd_config.d /etc/ssh/sshd_config.d.bak
     # 删除目录下的所有 .conf 文件
     rm -f /etc/ssh/sshd_config.d/*.conf
-    echo -e "\n${GREEN} 已删除 /etc/ssh/sshd_config.d/ 下的配置文件 ${NC}"
 fi
-sleep 1s
 
 # ===> 1-3. 变量定义
 # 填入需要创建的用户名
 while true; do
     echo -e "\n${RED} 用户名仅允许只允许字母、数字、下划线、短横线，且以字母开头 ${NC}"
     echo -ne "\n${GREEN} ===> 请输入需要创建的用户名： ${NC}"
-    read -r USERNAME_INPUT < /dev/tty
-    USERNAME="$USERNAME_INPUT" 
+    read -r USERNAME < /dev/tty
     sleep 1s
 
 # 简单合法性检查 
@@ -127,7 +123,6 @@ while true; do
         echo -ne "${RED} 错误: 用户名不合法 (只能包含小写字母、数字、_ -，且以字母开头) ${NC}"
         continue
     fi
-
     break
 done
 # ===> 1-4. 创建用户
@@ -154,24 +149,22 @@ chown -R "$USERNAME:$USERNAME" "$USER_HOME/.ssh"
 
 echo -e "\n${GREEN} SSH 公钥已配置 "
 echo -e " 如果需要为同一用户添加多个密钥，请手动在当前用户环境下手动执行 ${NC}"
-sleep 1s
 
 # ===> 1-6. 配置 Sudo
 # 写入 sudoers.d 避免修改 visudo
 echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/$USERNAME"
 chmod 440 "/etc/sudoers.d/$USERNAME"
 echo -e "\n${GREEN} Sudo 权限已配置 ${NC}"
-sleep 1s
 
 # ===> 1-7. 加固 ssh/sshd 主配置
 SSHD_CONFIG="/etc/ssh/sshd_config"
 
 # 再次确保 Include 指令不会引入麻烦
 # 之前已经删除了文件，为了双重保险，也可以把 Include 注释掉
-# 如果需要删除配置文件中的 Include 行，请取消注释下一行命令
+# 如果需要删除配置文件中的 Include 行，请取消注释下一行
 # sed -i 's/^Include/#Include/' $SSHD_CONFIG 
 
-echo -e "\n${GREEN} 配置 SSH 服务... ${NC}"
+echo -e "${GREEN} 配置 SSH 服务... ${NC}"
 cp $SSHD_CONFIG "$SSHD_CONFIG.bak.$(date +%F)"
 
 # 使用 sed 强行替换或追加配置
@@ -191,15 +184,13 @@ ensure_config "PasswordAuthentication" "no"
 ensure_config "PubkeyAuthentication" "yes"
 ensure_config "KbdInteractiveAuthentication" "no"
 ensure_config "ChallengeResponseAuthentication" "no"
-sleep 1s
 
 # 给 Root 也配上一份密钥，作为 SSH 备用通道
-echo -e "\n${GREEN} 正在同步公钥给 Root 用户... ${NC}"
+echo -e "${GREEN} 正在同步公钥给 Root 用户... ${NC}"
 mkdir -p /root/.ssh
 echo "$PUB_KEY" > /root/.ssh/authorized_keys
 chmod 700 /root/.ssh
 chmod 600 /root/.ssh/authorized_keys
-sleep 1s
 
 # 在重启 SSH 前，强制设置用户密码
 # 这是为了 sudo 验证，以及 VNC 救急
@@ -221,9 +212,9 @@ echo -e " 用户: ${GREEN} $USERNAME ${NC}"
 echo -e " 公钥: ${GREEN} $PUB_KEY ${NC}"
 echo -e "\n${RED} 请新建一个终端用于测试登录： ${NC}"
 echo -e "${RED} 1. 能否使用密钥登录对应用户? ${NC}"
-echo -e "${GREEN}    - 正常情况：可正常以 $USERNAME 身份登录而不是被拒绝 ${NC}"
+echo -e "    - 正常情况：可正常以 $USERNAME 身份登录而不是被拒绝 (publickey) "
 echo -e "${RED} 2. 登录后使用 'sudo -i' 时是否还需要输入密码? ${NC}"
-echo -e "${GREEN}    - 正常情况：使用 'sudo -i' 可以直接以 root 身份运行 Bash ${NC}"
+echo -e "    - 正常情况：可以直接切换至 root 身份 "
 sleep 1s
 echo -ne "\n${RED} ===> 如果测试结果没有问题，请输入 'ok': ${NC}"
 # 只有在输入 ok 后才继续执行
@@ -233,13 +224,13 @@ while true; do
         echo -e "\n${GREEN} 确认成功 ${NC}"
         break
     else
-        echo -ne "${RED} ===> 输入无效，请输入 'ok'： ${NC}"
+        echo -ne "${RED} ===> 请输入 'ok' 以确认： ${NC}"
         continue
     fi
 done
 
 echo -e "\n${GREEN} ===> Done. ${NC}"
-sleep 3s
+sleep 2s
 clear
 
 # ===> 2. 清理旧版本系统旧内核
@@ -268,12 +259,11 @@ OLD_IMAGES=$(dpkg-query -W -f='${db:Status-Status} ${Package}\n' | grep '^instal
 
 if [ -n "$OLD_IMAGES" ]; then
     echo -e "\n${GREEN} 正在清理旧版本 Linux 内核： ${NC}"
-    echo -e "${RED} $OLD_IMAGES ${NC}\N"
+    echo -e "${RED} $OLD_IMAGES ${NC}\n"
     
     # 清除旧内核
     echo "$OLD_IMAGES" | xargs -r apt purge -y
     echo -e "\n${GREEN} Partly Done. (1/3) ${NC}"
-    sleep 1s
     
     echo -e "\n${GREEN} 正在清理残留依赖... ${NC}"
     # 这一步会解决 rmdir not empty 的问题
@@ -281,11 +271,10 @@ if [ -n "$OLD_IMAGES" ]; then
     echo -e "\n${GREEN} Partly Done. (2/3) ${NC}"
     sleep 1s
     update-grub
-    sleep 1s
 
     echo -e "\n${GREEN} ===> 内核清理完成 ${NC}"
     echo -e "${GREEN} Done. (3/3) ${NC}"
-    sleep 3s
+    sleep 2s
 else
     echo -e "\n${GREEN} 未发现旧内核镜像 ${NC}"
     sleep 1s
@@ -308,7 +297,7 @@ apt update
 apt autoremove --purge -y
 apt clean
 echo -e "\n${GREEN} ===> Done. ${NC}"
-sleep 3s
+sleep 2s
 clear
 
 # ===> 采集基本系统信息，为总结做准备
@@ -352,7 +341,7 @@ echo -e " - 用户: ${GREEN} $USERNAME ${NC}"
 echo -e " - 公钥: ${GREEN} $PUB_KEY ${NC}"
 sleep 1s
 echo -e "\n${GREEN} 系统初始化全部完成 ${NC}"
-sleep 3s
+sleep 2s
 
 # 自行清理
 if [ -f "$0" ]; then
@@ -360,7 +349,6 @@ if [ -f "$0" ]; then
     echo " init2.sh 脚本清理已完成 "
 fi
 sleep 1s
-
 echo -e "\n  ____________________________ "
 echo -e " | GitHub: yhxpie/server-init | \n"
 
@@ -368,5 +356,5 @@ echo -e " | GitHub: yhxpie/server-init | \n"
 
 # GitHub: @yhxpie
 # https://github.com/yhxpie/server-init
-# Version 1.1.0
-# Last Update: 2026-1-19
+# Version 1.2.1
+# Last Update: 2026-8-22

@@ -7,11 +7,8 @@
 一个适用于 Debian / Ubuntu 服务器的自动化初始化脚本套件，
 包含系统基础配置、安全加固、内核升级、面板安装以及 Docker 环境部署等功能。
 
-> [!IMPORTANT]
-> 最低系统要求：
-> **Debian 11**
-> &
-> **Ubuntu 22.04 LTS**
+最低系统要求：
+**Debian 11** & **Ubuntu 22.04 LTS**
 
 > [!CAUTION]
 > 项目名称为 `server-init` ，即只主动适配服务器系统，一些功能；理论上支持桌面端系统，但仍然不建议桌面端系统使用
@@ -26,13 +23,12 @@
 
 ### 第一步：`init.sh` 基础配置
 
-> [!IMPORTANT]
-> 非常建议提前安装 `curl`，虽然较新的 Minimal 系统中应该都会自带这一命令
->
-> 如果没有，请使用命令：
-> ```
-> apt install curl
-> ```
+非常建议提前安装 `curl`，一些 Debian 镜像中可能默认不含有此包。
+
+如果没有，请使用命令：
+```
+apt install curl
+```
 
 **使用 root 用户运行以下命令：**
 
@@ -48,7 +44,7 @@ curl -O https://yhxpie-server-init.netlify.app/init.sh || wget -O ${_##*/} $_ &&
 ```
 
 > [!WARNING]
-> 脚本执行完毕后，系统将强制重启以应用新内核。
+> 脚本 Stage 1 执行完毕后，系统将强制重启。
 
 对于完全测试环境，可以使用：
 ```bash
@@ -57,10 +53,12 @@ curl -O https://yhxpie-server-init.netlify.app/init-test.sh && bash init.sh
 
 ### 第二步：配置用户与清理
 
-**重启完成后请重新连接终端。**
-此时会看到终端中有相应提示。
+> [!WARNING]
+> `init2.sh` 或 `init-clean.sh` 请务必在系统重启后执行
 
-- 方案 A：完成配置（推荐）输入以下命令，进行 SSH 密钥配置和旧内核清理：
+此时会看到终端中有相应提示：
+
+- 方案 A：完成配置（推荐）输入以下命令，进行 SSH 密钥配置和整体环境清理：
 ```bash
 sudo bash init2.sh
 ```
@@ -70,7 +68,7 @@ sudo bash init2.sh
 sudo bash init-clean.sh
 ```
 
-`init-clean.sh` 仅删除控制台消息并删除所有残余内容，如果是仅测试环境，也可以不执行
+`init-clean.sh` 仅删除控制台消息并删除所有残留文件，如果是仅测试环境，也可以不执行
 
 - - -
 
@@ -110,15 +108,7 @@ sudo bash init-clean.sh
 > 
 > 同样地，在国内环境中安装 **aaPanel** 的速度也会较慢
 
-> [!IMPORTANT]
-> 脚本不保存任何安装文件，面板的所有文件全部从官方服务器直接获取
->
-> 面板安装同步的版本号会有一段时间的延迟，可以在面板安装完成后进行更新
-
 ### Stage 2: `init2.sh`：进阶配置
-
-> [!WARNING]
-> `init2.sh` 或 `init-clean.sh` 请务必在系统重启后执行
 
 - **SSH 安全加固**：
   - 强制清理 SSH Drop-in 干扰配置
@@ -130,8 +120,7 @@ sudo bash init-clean.sh
   - 精准识别并移除旧版本内核
   - 移除无用依赖与残留配置文件
 
-> [!IMPORTANT]
-> 此步骤中设计的用户可以通过 VNC 进行密码登录
+此步骤中涉及的用户可以通过 VNC 进行密码登录
 
 ### `init-test.sh`：测试环境快速配置
 
@@ -151,9 +140,6 @@ sudo bash init-clean.sh
 
 ## 兼容性：
 
-> [!WARNING]
-> 标准版内置版本检测，不支持过旧的系统运行。
-> **对于列表中未列出的系统，请转到。**
 - ✅ = 支持所有功能
 - ⚠️ = 需要注意
 - ❌ = 无法提供支持
@@ -161,24 +147,24 @@ sudo bash init-clean.sh
 ### Ubuntu <img width="16" height="16" src="https://documentation.ubuntu.com/server/_static/favicon.png" /> 
 
 | OS Version | Status | init.sh | init2.sh | init-test.sh |
-| :----- | :-----: | :-----: | :-----: | :-----: |
+| :----- | :-----: | :-----: | :-----: |
 | 25.10 (Questing Quokka) | Verifed | ✅ | ✅ | ✅ |
 | 25.04 (Plucky Puffin) | Verifed | ✅ | ✅ | ✅ |
 | 24.04 LTS (Noble Numbat) | Verifed | ✅ | ✅ | ✅ |
 | 22.04 LTS (Jammy Jellyfish) | Verifed | ✅ | ✅ | ✅ |
-| 20.04 LTS (Focal Fossa) | ⚠️ | Docker 来自 apt 仓库 |  |  ⚠️ Docker  |
-| 18.04 LTS (Bionic Beaver) | ⚠️ | Docker 来自 apt 仓库 |  | ⚠️ Docker  |
-| 16.04 LTS (Xenial Xerus) | ⚠️ | Docker 来自 apt 仓库 |  | ⚠️ Docker  |
-| 14.04 LTS (Trusty Tahr) | ⚠️ | Docker 来自 apt 仓库 |  | ⚠️ Docker |
+| 20.04 LTS (Focal Fossa) | ⚠️ | Docker 来自 apt 仓库 |  | Docker 来自 apt 仓库 |
+| 18.04 LTS (Bionic Beaver) | ⚠️ | Docker 来自 apt 仓库 |  | Docker 来自 apt 仓库 |
+| 16.04 LTS (Xenial Xerus) | ⚠️ | Docker 来自 apt 仓库 |  | Docker 来自 apt 仓库 |
+| 14.04 LTS (Trusty Tahr) | ⚠️ | Docker 来自 apt 仓库 |  | Docker 来自 apt 仓库 |
 
 ### Debian <img width="16" height="16" src="https://www.debian.org/favicon.ico" />
 
-| OS Version | Status | init.sh | init2.sh | init-test.sh |
-| :----- | :-----: | :-----: | :-----: | :-----: |
+| OS Version | Status | init.sh | init2.sh |
+| :----- | :-----: | :-----: | :-----: |
 | 13 Testing (Trixie) | Verifed | ✅ | ✅ |
 | 12 (Bookworm) | Verifed | ✅ | ✅ |
 | 11 (Bullseye) | Verifed | ✅ | ✅ |
-| 10 (Buster) | ⚠️ | Docker 来自 apt 仓库 |  | ⚠️ Docker  |
+| 10 (Buster) | ⚠️ | Docker 来自 apt 仓库 |  | Docker 来自 apt 仓库 |
 
 ❌ 旧版本系统的 Docker 安装自系统对应的 apt 仓库，其中无 Docker Compose
 

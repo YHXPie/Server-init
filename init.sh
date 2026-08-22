@@ -2,7 +2,7 @@
 
 # init.sh
 
-# Copyright (C) 2025 StreamingHX/yhxpie
+# Copyright (C) 2026 StreamingHX/yhxpie
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -136,12 +136,12 @@ echo -e " [2/$TOTAL_STEPS] 设置时区为 Asia/Shanghai... OK √ "
 echo -e " ===> [3/$TOTAL_STEPS] 配置 TCP BBR... ${NC}"
 sleep 1s
 
-if ! grep -q "net.ipv4.tcp_congestion_control=bbr" /etc/sysctl.conf; then
-    echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
-    echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
-    sysctl -p
-    echo -e "\n${GREEN} BBR 已成功启用 ${NC}"
-    echo -e "${GREEN} ===> Done. ${NC}"
+if [[ $(sysctl -n net.ipv4.tcp_congestion_control) != "bbr" ]]; then
+    BBR_CONF="/etc/sysctl.d/90-bbr.conf"
+    echo "net.core.default_qdisc=fq" > "$BBR_CONF"
+    echo "net.ipv4.tcp_congestion_control=bbr" >> "$BBR_CONF"
+    sysctl --system    
+    echo -e "\n${GREEN} 已成功启用 ${NC}"
     sleep 2s
 else
     echo -e "\n${GREEN} BBR 配置已存在 ${NC}"
@@ -376,7 +376,7 @@ sleep 1s
 clear
 
 echo -e "\n${GREEN} 正在安装基础软件... (5/6) ${NC}"
-PACKAGES="sudo vim nano ufw bash curl wget htop qemu-guest-agent locales systemd-timesyncd"
+PACKAGES="sudo vim nano ufw bash curl wget htop qemu-guest-agent locales systemd-timesyncd unattened-upgrades"
 echo -e "\n${GREEN} ===> 即将安装：$PACKAGES ${NC}"
 
 apt install -y $PACKAGES
@@ -553,10 +553,8 @@ else
             check_and_fix_apt
             apt install -y --no-install-recommends linux-generic-hwe-$(lsb_release -rs) || apt install linux-modules-extra-$(uname -r)
         else
-            apt install linux-modules-extra-$(uname -r)
+            apt install linux-modules-extra-$(uname -r) || true
         fi
-    else
-        echo -e "\n${GREEN} 内核已是最新 ${NC}"
     fi
     update-grub
     echo -e "\n${GREEN} ===> Done. ${NC}"
@@ -577,15 +575,14 @@ echo -e " ===> [9/$TOTAL_STEPS] 磁盘空间优化... ${NC}"
 # 只有 ext4 文件系统支持 tune2fs，执行前需要判断。
 ROOT_FS=$(df -T / | awk 'NR==2 {print $2}')
 if [ "$ROOT_FS" == "ext4" ]; then
-    # 获取根目录分区名
     ROOT_DEV=$(findmnt / -o SOURCE -n)
-    # 留 1% 给 root 救急
+    # 留 1%
     tune2fs -m 1 "$ROOT_DEV" 
     echo -e "\n${GREEN} 已将 $ROOT_DEV 的保留空间调整为 1% ${NC}"
     echo -e "${GREEN} ===> Done. ${NC}"
     sleep 2s
 else
-    echo -e "\n${GREEN} 根文件系统为 $ROOT_FS，跳过 tune2fs 优化 ${NC}"
+    echo -e "\n${GREEN} 根文件系统为 $ROOT_FS，跳过优化 ${NC}"
     sleep 1s
 fi
 clear
@@ -648,9 +645,7 @@ function check_installed_bt_version() {
 # ===> 开始面板安装逻辑
 check_and_fix_apt
 case $PANEL_CHOICE in
-# 面板安装脚本将统一命名为 install_panel.sh 方便清理
     [aA])
-    # https://www.bt.cn/new/download.html
         echo -e "\n${GREEN} ===> 安装宝塔最新版... "
         BT_INSTALL_URL=$(curl -sSL $PANEL_CURL_RETRY "https://www.bt.cn/new/download.html" | grep -oE 'https://[^"'\'' <>]+/install[^"'\'' <>]*\.sh' | head -n 1)
         echo -e " 请根据安装脚本提示就行操作... ${NC}"
@@ -660,7 +655,6 @@ case $PANEL_CHOICE in
         INSTALLED_PANEL=" 宝塔面板 v${INSTALLED_BT_VERSION} "
         ;;
     [bB])
-    # https://www.bt.cn/new/download.html
         echo -e "\n${GREEN} ===> 安装宝塔稳定版... "
         BT_INSTALL_URL=$(curl -sSL $PANEL_CURL_RETRY "https://www.bt.cn/new/download.html" | grep -oE 'https://[^"'\'' <>]+/installStable[^"'\'' <>]*\.sh' | head -n 1)
         echo -e " 请根据安装脚本提示进行操作... ${NC}"
@@ -670,7 +664,6 @@ case $PANEL_CHOICE in
         INSTALLED_PANEL=" 宝塔面板稳定版 v${INSTALLED_BT_VERSION} "
         ;;
     [cC])
-    # https://www.bt.cn/new/download.html
         echo -e "\n${GREEN} ===> 安装宝塔国际版 aaPanel ... "
         BT_INSTALL_URL=$(curl -sSL $PANEL_CURL_RETRY "https://www.aapanel.com/new/download.html" | grep -oE 'https://[^"'\'' <>]+/script/[^"'\'' <>]*\.sh' | head -n 1)
         echo -e " 请根据安装脚本提示进行操作... ${NC}"
@@ -721,7 +714,6 @@ if [ "$NEED_ASK_DOCKER_INSTALL" = true ]; then
     if [[ "$DOCKER_CONFIRM" =~ ^[Yy]$ ]] || [[ -z "$DOCKER_CONFIRM" ]]; then
         echo -e "\n${GREEN} 正在检查 Docker 安装条件... ${NC}"
         check_and_fix_apt
-        # 读取系统信息
         if [ -f /etc/os-release ]; then
             . /etc/os-release
         else
@@ -786,19 +778,16 @@ if command -v docker &> /dev/null; then
     # 如果没取到 Compose 版本比如旧版，则标记一下
     if [[ -z "$C_VER" ]]; then C_VER="Unknown"; fi
     
-    # 更新变量
     INSTALLED_DOCKER="${GREEN} 运行中 ：Docker $D_VER + Compose $C_VER ${NC}"
 fi
 clear
 
 # ===> 清理缓存
 echo -e "\n${GREEN} ===> 开始清理... ${NC}"
-
 # 清理 apt 缓存
 apt update
 apt autoremove --purge -y
 apt clean
-
 # 清理增强组件缓存
 rm -f install_panel.sh|| true
 rm -f get-docker.sh || true
@@ -862,7 +851,6 @@ echo -e " - 磁盘空间优化  : ${GREEN} 完成 √ ${NC}"
 echo -e "${GREEN} 增强组件信息： ${NC}"
 echo -e " - 面板环境      : ${GREEN} $INSTALLED_PANEL ${NC}"
 echo -e " - Docker 环境   : ${GREEN} $INSTALLED_DOCKER ${NC}"
-
 sleep 1s
 
 echo -e "\n${GREEN} ============================================= ${NC}"
@@ -874,10 +862,9 @@ echo -e "${GREEN} Swap 占用 ${NC}    : ${SWAP_USAGE} "
 echo -e "${GREEN} 磁盘空间占用 ${NC} : ${DISK_USAGE} "
 echo -e "${GREEN} 系统信息 ${NC}     : ${SYSTEM_INFO} "
 echo -e "${GREEN} 公网 IP 信息 ${NC} : ${PUBLIC_IPV4} + ${PUBLIC_IPV6} "
+sleep 2s
 
-sleep 1s
-
-echo -e "${GREEN} 系统初始化 Stage 2 中，需要创建一个非 root 用户并强制启用 SSH 密钥登录 ${NC}"
+echo -e "\n${GREEN} 系统初始化 Stage 2 中，需要创建一个非 root 用户并强制启用 SSH 密钥登录 ${NC}"
 echo -e " 有关如何创建 SSH 密钥的信息：${NC} "
 cat SSH_GUIDE.md
 
@@ -885,30 +872,27 @@ cat SSH_GUIDE.md
 cat >> /root/.bashrc << 'EOF'
 # [server-init] Stage 2 Reminder
 if [ -f /root/init2.sh ]; then
-    echo -e "\033[0;31m=================================================\033[0m"
+    echo -e "\033[0;31m========================================================\033[0m"
     echo -e "\033[1;33m 系统初始化 Stage 2 尚未执行 \033[0m"
     echo -e "\033[1;32m 请在 root 下输入: 'sudo bash init2.sh' \033[0m"
-    echo -e "\033[1;32m 以继续进行 SSH 用户密钥登陆等配置与最终环境清理\033[0m"
+    echo -e "\033[1;32m 以继续进行 SSH 密钥登陆配置与最终环境清理\033[0m"
     echo
     echo -e "\033[1;32m 有关如何创建 SSH 密钥的信息 \033[0m"
     echo -e "\033[1;32m 请输入 'cat SSH_GUIDE.md' \033[0m"
     echo
     echo -e "\033[1;32m 如果无需进行后续操作 \033[0m"
-    echo -e "\033[1;32m 请在 root 下输入: 'sudo bash init-clean.sh' \033[0m"
-    echo -e "\033[0;31m=================================================\033[0m"
+    echo -e "\033[1;32m 请在 root 下输入: 'sudo bash init-clean.sh' 提前结束 \033[0m"
+    echo -e "\033[0;31m========================================================\033[0m"
 fi
 EOF
 
 # 自行清理
 if [ -f "$0" ]; then
     rm -f "$0"
-    echo " init.sh 脚本清理已完成 "
+    echo -e "\n init.sh 脚本清理已完成 "
 fi
-
-echo -e "\n${RED} 即将重启系统 "
 sleep 1s
-echo -e "\n${GREEN} ===> 正在重启... SSH 将断开连接 ${NC}"
-
+echo -e "\n${RED} 即将重启系统 "
 echo -e "\n  ____________________________ "
 echo -e " | GitHub: yhxpie/server-init | \n"
 sleep 1s
@@ -919,5 +903,5 @@ reboot
 
 # GitHub: @yhxpie
 # https://github.com/yhxpie/server-init
-# Version 1.2.0
-# Last Update: 2026-7-16
+# Version 1.2.1
+# Last Update: 2026-8-22
