@@ -894,7 +894,7 @@ fi
 sleep 1s
 echo -e "\n${RED} 即将重启系统 "
 echo -e "\n  ____________________________ "
-echo -e " | GitHub: yhxpie/server-init | \n"
+echo -e " | GitHub: yhxpie/server-init | ${NC}\n"
 sleep 1s
 
 reboot
