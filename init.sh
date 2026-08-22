@@ -376,7 +376,7 @@ sleep 1s
 clear
 
 echo -e "\n${GREEN} 正在安装基础软件... (5/6) ${NC}"
-PACKAGES="sudo vim nano ufw bash curl wget htop qemu-guest-agent locales systemd-timesyncd unattened-upgrades"
+PACKAGES="sudo vim nano ufw bash curl wget htop qemu-guest-agent locales systemd-timesyncd unattended-upgrades"
 echo -e "\n${GREEN} ===> 即将安装：$PACKAGES ${NC}"
 
 apt install -y $PACKAGES
@@ -903,5 +903,5 @@ reboot
 
 # GitHub: @yhxpie
 # https://github.com/yhxpie/server-init
-# Version 1.2.1
+# Version 1.2.2
 # Last Update: 2026-8-22
